@@ -1,196 +1,196 @@
 # NearChuckle Far Cry — Android Port
 
-Полноценный, оптимизированный и стабильный порт культовой игры **Far Cry (CryEngine 1)** на платформу **Android (ARM64-v8a)**, основанный на проекте NearChuckle и SDL3.
+A complete, optimized and stable port of the cult game **Far Cry (CryEngine 1)** to **Android (ARM64-v8a)**, based on the NearChuckle project and SDL3.
 
 ---
 
-## 🎮 Ключевые возможности порта
+## 🎮 Key features of the port
 
-### 1. Современный Android Launcher (`LauncherActivity`)
-- **Выбор директории с игрой**: автоматическое определение и удобный диалог обзора папок. Поддержка оригинальных игровых архивов (`FCData`, `Levels` и `.pak` файлов).
-- **Графический стек (gl4es / Mesa Zink)**: трансляция классического настольного конвейера OpenGL 1.4-2.1 и ассемблерных шейдеров (`GL_ARB_vertex_program`, `GL_ARB_fragment_program`) в нативный OpenGL ES 2.0/3.0 через встроенный транслятор `gl4es` и поддержку Mesa Zink (OpenGL over Vulkan) для максимальной производительности на мобильных GPU (Adreno / Mali).
-- **Поддержка кастомных драйверов Turnip (AdrenoTools)**:
-  - Установка кастомных Turnip Vulkan драйверов прямо из `.zip` архивов через файловый менеджер.
-  - Автоматический парсинг `meta.json` и извлечение `libvulkan_freedreno.so`.
-  - Генерация Vulkan ICD (`VK_ICD_FILENAMES`).
-  - Переключение между установленными драйверами и системным драйвером в один клик.
-  - Поддержка режима GPU Turbo для процессоров Snapdragon.
-- **Гибкие настройки графики и разрешения**:
-  - Нативное разрешение экрана.
+### 1. Modern Android Launcher (`LauncherActivity`)
+- **Game folder selection**: automatic detection and a convenient folder browser dialog. Supports the original game archives (`FCData`, `Levels` and `.pak` files).
+- **Graphics stack (gl4es / Mesa Zink)**: translates the classic desktop OpenGL 1.4-2.1 pipeline and assembly shaders (`GL_ARB_vertex_program`, `GL_ARB_fragment_program`) to native OpenGL ES 2.0/3.0 through the built-in `gl4es` translator, with Mesa Zink (OpenGL over Vulkan) support for the best performance on mobile GPUs (Adreno / Mali).
+- **Custom Turnip driver support (AdrenoTools)**:
+  - Install custom Turnip Vulkan drivers straight from `.zip` archives through the file manager.
+  - Automatic parsing of `meta.json` and extraction of `libvulkan_freedreno.so`.
+  - Vulkan ICD generation (`VK_ICD_FILENAMES`).
+  - One-click switching between the installed drivers and the system driver.
+  - GPU Turbo mode for Snapdragon processors.
+- **Flexible graphics and resolution settings**:
+  - Native screen resolution.
   - 1080p (Full HD).
-  - 720p (HD — рекомендуется для баланса качества и скорости).
-  - 540p (qHD — для более слабых устройств).
-- **Регулировка поля зрения (FOV)** от 70° до 120°.
-- **Режим разработчика (`-DEVMODE`)** и поле для произвольных консольных аргументов.
-- **Настройка чувствительности камеры** для сенсорного управления.
+  - 720p (HD — recommended for a balance of quality and speed).
+  - 540p (qHD — for weaker devices).
+- **Field of view (FOV)** adjustable from 70° to 120°.
+- **Developer mode (`-DEVMODE`)** and a field for custom console arguments.
+- **Camera sensitivity setting** for the touch controls.
 
 ---
 
-### 2. Полный сенсорный оверлей управления (On-Screen Controls / OSC)
-Специально разработанный для Far Cry сенсорный интерфейс с двумя стиками и кнопками всех основных действий:
-- **Левый аналоговый стик**: плавное передвижение персонажа (WASD) с круговой мертвой зоной.
-- **Правая область обзора (Touch Look)**: свободное управление камерой и прицелом с трансляцией относительных смещений в SDL3.
-- **Основные кнопки действий**:
-  - Огонь / Стрельба (ЛКМ)
-  - Прицеливание / Зум (ПКМ) — «липкая» (toggle) кнопка: одно нажатие фиксирует прицел, как постоянно зажатая ПКМ, повторное нажатие отпускает его. Пока прицел зафиксирован, кнопка подсвечена зелёным, палец можно убрать и спокойно целиться/смотреть по сторонам. Фиксация автоматически сбрасывается при уходе в фон и при входе в режим EDIT.
-  - Прыжок (`Space`)
-  - Присесть (`C` / `Ctrl`)
-  - Лечь / Ползти (`V`)
-  - Шаг / Тихий ход (`Z`, настраиваемая)
-  - Спринт / Задержка дыхания (`Shift`)
-  - Наклон влево / вправо (`Q` / `E`)
-  - Перезарядка (`R`)
-  - Действие / Использовать (`F`)
-  - Смена режима стрельбы (`X`)
-  - Бросок гранаты (`G`)
-  - Выбор типа гранаты (`H`)
-  - Смена оружия (Вперед `PageDown` / Назад `PageUp`, слоты 1-4)
-  - Сброс оружия (`J`, настраиваемая)
-  - Фонарик (`L`)
-  - Бинокль (`B`)
-  - ПНВ / CryVision (`T`)
-  - Вид от 3-го лица в технике (`F1`, настраиваемая)
-  - Задачи / КПК (`Tab`)
-  - Консоль (`~`)
-  - Пауза / Меню (`Esc`)
-- **Интерактивный режим редактирования (EDIT Mode)**:
-  - Вызывается прямо во время игры кнопкой **EDIT** или из лаунчера через пункт **"Настроить управление"**.
-  - Перетаскивание (drag-and-drop) любого элемента управления в любую точку экрана.
-  - Изменение размера кнопок (**Размер + / -**).
-  - Настройка прозрачности кнопок (**Прозр. + / -**).
-  - Скрытие/отображение ненужных кнопок (**Скрыть / Показать**).
-  - Сброс к стандартной раскладке (**Сброс**).
-  - Автоматическое сохранение персональной раскладки в `SharedPreferences`.
+### 2. Full on-screen touch controls (On-Screen Controls / OSC)
+A touch interface designed specifically for Far Cry, with two sticks and buttons for all the main actions:
+- **Left analog stick**: smooth character movement (WASD) with a circular dead zone.
+- **Right look area (Touch Look)**: free camera and aim control, sending relative movements to SDL3.
+- **Main action buttons**:
+  - Fire / Shoot (LMB)
+  - Aim / Zoom (RMB) — a "sticky" (toggle) button: one press locks the aim, as if RMB were held down, and a second press releases it. While the aim is locked, the button is highlighted in green, and you can lift your finger and calmly aim or look around. The lock is released automatically when the app goes to the background and when EDIT mode is entered.
+  - Jump (`Space`)
+  - Crouch (`C` / `Ctrl`)
+  - Go prone / Crawl (`V`)
+  - Walk / Sneak (`Z`, configurable)
+  - Sprint / Hold breath (`Shift`)
+  - Lean left / right (`Q` / `E`)
+  - Reload (`R`)
+  - Action / Use (`F`)
+  - Fire mode (`X`)
+  - Throw grenade (`G`)
+  - Grenade type (`H`)
+  - Switch weapon (Next `PageDown` / Previous `PageUp`, slots 1-4)
+  - Drop weapon (`J`, configurable)
+  - Flashlight (`L`)
+  - Binoculars (`B`)
+  - Night vision / CryVision (`T`)
+  - Third-person view in vehicles (`F1`, configurable)
+  - Objectives / PDA (`Tab`)
+  - Console (`~`)
+  - Pause / Menu (`Esc`)
+- **Interactive edit mode (EDIT Mode)**:
+  - Opened in-game with the **EDIT** button, or from the launcher with **"Configure controls"**.
+  - Drag and drop any control anywhere on the screen.
+  - Resize buttons (**Size + / -**).
+  - Adjust button opacity (**Opacity + / -**).
+  - Hide / show buttons you do not need (**Hide / Show**).
+  - Reset to the default layout (**Reset**).
+  - The personal layout is saved automatically in `SharedPreferences`.
 
 ---
 
-### 3. Движок и архитектура
-- **64-битная архитектура ARM64-v8a**:
-  - Все структуры и указатели приведены к корректным 64-битным типам (`intptr_t`, `INT_PTR`, `UINT_PTR`), устранены усечения указателей в `CHandle`, `GL_VertBuffer`, `EvalFuncs_RE`, `RendElement`, `CREOcean`, `ShaderCore`.
-  - Корректная детекция архитектуры ARM64 в `CPUDetect.h`.
-  - Использование стандарта POSIX `<dirent.h>` для файловой системы Android Bionic.
-  - Корректное сопоставление типов SDL3 (`SDL_SharedObject`, `SDL_GL_GetProcAddress`).
-- **Модульная загрузка библиотек**:
-  - `libFarCry.so` — главный исполняемый модуль точки входа.
-  - `libCrySystem.so` — подсистема движка, менеджер памяти, CryPak.
+### 3. Engine and architecture
+- **64-bit ARM64-v8a architecture**:
+  - All structures and pointers use proper 64-bit types (`intptr_t`, `INT_PTR`, `UINT_PTR`); pointer truncations were removed from `CHandle`, `GL_VertBuffer`, `EvalFuncs_RE`, `RendElement`, `CREOcean`, `ShaderCore`.
+  - Correct ARM64 architecture detection in `CPUDetect.h`.
+  - Uses the POSIX `<dirent.h>` standard for the Android Bionic file system.
+  - Correct SDL3 type mapping (`SDL_SharedObject`, `SDL_GL_GetProcAddress`).
+- **Modular library loading**:
+  - `libFarCry.so` — the main executable module, the entry point.
+  - `libCrySystem.so` — engine subsystem, memory manager, CryPak.
   - `libCry3DEngine.so`, `libCryGame.so`, `libCryInput.so`, `libCrySoundSystem.so`, `libCryPhysics.so`, `libCryAISystem.so`, `libCryAnimation.so`, `libCryEntitySystem.so`, `libCryMovie.so`, `libCryScriptSystem.so`.
-  - `libXRenderOGL.so` — OpenGL рендерер с поддержкой Mesa Zink.
-  - `libSDL3.so`, `libopenal.so`, `libogg.so`, `libvorbis.so`, `libvorbisfile.so` — зависимости движка.
-  - `libdriverloader.so` — нативный загрузчик Turnip и хуков AdrenoTools.
+  - `libXRenderOGL.so` — OpenGL renderer with Mesa Zink support.
+  - `libSDL3.so`, `libopenal.so`, `libogg.so`, `libvorbis.so`, `libvorbisfile.so` — engine dependencies.
+  - `libdriverloader.so` — native loader for Turnip and the AdrenoTools hooks.
 
-### 4. Журнал ошибок и Crash Reports (Диагностика)
-- **Автоматический перехват сбоев:**
-  - При возникновении Java исключения (`UncaughtExceptionHandler`), нативного сигнала (`SIGSEGV`, `SIGABRT`, `SIGBUS`, `SIGFPE`, `SIGILL`) или критической ошибки CryEngine (`CSystem::Error`) формируется структурированный диагностический отчет.
-- **Содержимое отчета:**
-  - Модель устройства, плата, версия Android, API level, список поддерживаемых ABI.
-  - Конфигурация лаунчера (путь к игре, активность Zink, выбранный Turnip драйвер, аргументы командной строки).
-  - Стек вызовов (Stacktrace / Backtrace).
-  - Хвост системного лога Logcat (`logcat -d -v time`).
-  - Содержимое игрового журнала движка `log.txt`.
-- **Быстрое копирование:**
-  - В лаунчере добавлена кнопка **«Логи и отчеты об ошибках (Crash Reports)»**.
-  - На экране отчета доступна кнопка **«Скопировать весь отчет»** — отчет копируется в буфер обмена в один клик для быстрой отправки разработчику.
-  - Кнопка **«Поделиться»** позволяет отправить отчет через любой мессенджер или почту.
-- **Изолированный процесс:**
-  - Экран `CrashReportActivity` выполняется в выделенном процессе `:crash`, что гарантирует отображение отчета даже при аварийном падении основного процесса игры.
+### 4. Error log and crash reports (diagnostics)
+- **Automatic crash capture:**
+  - When a Java exception (`UncaughtExceptionHandler`), a native signal (`SIGSEGV`, `SIGABRT`, `SIGBUS`, `SIGFPE`, `SIGILL`) or a critical CryEngine error (`CSystem::Error`) occurs, a structured diagnostic report is created.
+- **Report contents:**
+  - Device model, board, Android version, API level, list of supported ABIs.
+  - Launcher configuration (game path, whether Zink is active, the selected Turnip driver, command-line arguments).
+  - Call stack (stack trace / backtrace).
+  - The tail of the system log (`logcat -d -v time`).
+  - The contents of the engine's game log `log.txt`.
+- **Quick copy:**
+  - The launcher has a **"Logs and crash reports"** button.
+  - The report screen has a **"Copy the whole report"** button — the report is copied to the clipboard in one tap, to send it to the developer quickly.
+  - The **"Share"** button sends the report through any messenger or e-mail app.
+- **Isolated process:**
+  - The `CrashReportActivity` screen runs in a dedicated `:crash` process, so the report is shown even when the main game process crashes.
 
-### 5. Оповещение об обновлениях лаунчера (Self-Update)
-- **Автоматическая проверка:**
-  - При запуске лаунчер обращается к манифесту обновлений `update.json` и сравнивает `versionCode` из него с установленной сборкой.
-  - Если доступна более новая версия, показывается диалог **«Доступно обновление»** с двумя кнопками: **«Скачать»** и **«Отмена»**.
-  - «Скачать» загружает APK с индикатором прогресса и сразу открывает системный установщик, «Отмена» откладывает установку до следующего запуска лаунчера.
-- **Ручная проверка:**
-  - Кнопка **«Проверить обновления»** в лаунчере проверяет версию принудительно (игнорируя кэш) и сообщает, если обновлений нет или нет сети.
-- **Кэш и автономность:**
-  - Ответ сервера кэшируется на 6 часов (`UpdateManager.CACHE_TTL_MS`), поэтому частые запуски игры не создают лишних запросов.
-  - При отсутствии интернета диалог просто не показывается — запуск игры не блокируется.
-- **Формат манифеста `update.json`:**
+### 5. Launcher update notifications (Self-Update)
+- **Automatic check:**
+  - At start-up, the launcher reads the `update.json` update manifest and compares its `versionCode` with the installed build.
+  - If a newer version is available, an **"Update available"** dialog is shown with two buttons: **"Download"** and **"Cancel"**.
+  - "Download" downloads the APK with a progress bar and opens the system installer right away; "Cancel" postpones the installation until the next launcher start.
+- **Manual check:**
+  - The **"Check for updates"** button in the launcher forces a check (ignoring the cache) and says when there is no update or no network.
+- **Cache and offline use:**
+  - The server's answer is cached for 6 hours (`UpdateManager.CACHE_TTL_MS`), so frequent game starts do not send needless requests.
+  - Without internet access the dialog is simply not shown — the game start is never blocked.
+- **`update.json` manifest format:**
 
-  | Поле | Тип | Описание |
+  | Field | Type | Description |
   | --- | --- | --- |
-  | `versionCode` | int | **Обязательно.** Номер сборки; должен совпадать с `versionCode` в `android/app/build.gradle` публикуемого APK. |
-  | `versionName` | string | Версия для показа пользователю (`1.0.2`). |
-  | `apkUrl` | string | Ссылка на APK. Если не указана, берется первый `.apk` из последнего релиза GitHub. |
-  | `size` | long | Размер APK в байтах (страховка для прогресс-бара, если сервер не отдает `Content-Length`). |
-  | `notes` | string | Что нового — выводится в диалоге обновления. |
-  | `mandatory` | bool | `true` — диалог нельзя закрыть кнопкой «Назад» (кнопка «Отмена» остается). |
+  | `versionCode` | int | **Required.** The build number; must match the `versionCode` in `android/app/build.gradle` of the published APK. |
+  | `versionName` | string | The version shown to the user (`1.0.2`). |
+  | `apkUrl` | string | Link to the APK. If missing, the first `.apk` of the latest GitHub release is used. |
+  | `size` | long | APK size in bytes (a fallback for the progress bar when the server sends no `Content-Length`). |
+  | `notes` | string | What's new — shown in the update dialog. |
+  | `mandatory` | bool | `true` — the dialog cannot be closed with the "Back" button (the "Cancel" button stays). |
 
-- **Где брать манифест (проверяется по порядку):**
-  1. `https://rohitcodes.fyi/nearchuckle/update.json` — файловый хост проекта (тот же, что раздает кэш шейдеров).
-  2. `https://raw.githubusercontent.com/Player124413/NearChuckle-android-edition/Android/android/update.json` — копия из репозитория (`android/update.json`), работает без стороннего хостинга.
-- **Как выпустить обновление:**
-  1. Поднять `versionCode` / `versionName` в `android/app/build.gradle`.
-  2. Собрать APK и приложить `app-release.apk` к релизу GitHub.
-  3. В `android/update.json` (и/или в копии на файловом хосте) указать новый `versionCode`, `versionName` и `notes`.
-- **Установка скачанного APK:**
-  - APK сохраняется в приватную папку приложения и передается установщику через `androidx.core.content.FileProvider` (`res/xml/file_paths.xml`).
-  - На Android 8+ лаунчер сначала просит разрешить «Установку неизвестных приложений» и после возврата из настроек запускает установщик автоматически.
+- **Where the manifest is read from (checked in order):**
+  1. `https://rohitcodes.fyi/nearchuckle/update.json` — the project's file host (the same one that serves the shader cache).
+  2. `https://raw.githubusercontent.com/Player124413/NearChuckle-android-edition/Android/android/update.json` — the copy in the repository (`android/update.json`), which works without third-party hosting.
+- **How to release an update:**
+  1. Raise `versionCode` / `versionName` in `android/app/build.gradle`.
+  2. Build the APK and attach `app-release.apk` to a GitHub release.
+  3. In `android/update.json` (and/or in the copy on the file host), set the new `versionCode`, `versionName` and `notes`.
+- **Installing the downloaded APK:**
+  - The APK is saved in the app's private folder and handed to the installer through `androidx.core.content.FileProvider` (`res/xml/file_paths.xml`).
+  - On Android 8+, the launcher first asks to allow "Install unknown apps", and starts the installer automatically after returning from the settings.
 
 ---
 
-### 6. Поддержка клавиатуры, мыши и геймпада
-- **Клавиатура:** работает «из коробки» через SDL — аппаратные клавиши доходят до движка
-  (`SDLSurface.onKey` → `SDLActivity.handleKeyEvent` → `CSDLKeyboard` читает события SDL).
-- **Мышь:** работает через SDL; движок включает относительный режим
-  (`SDL_SetWindowRelativeMouseMode`), поэтому на Android 8+ SDL захватывает указатель
-  (pointer capture) и обзор управляется настоящей мышью, как на ПК.
-- **Геймпад:** CryEngine 1 не имеет геймпад-бэкенда на Android, поэтому добавлен
-  `GamepadMapper` (чистая Java, движок и SDL не модифицированы). Он перехватывает события
-  геймпада на уровне `GameActivity.dispatchKeyEvent` / `dispatchGenericMotionEvent` и
-  переводит их в те же инъекции клавиш/мыши, что используют экранные кнопки
-  (`onNativeKeyDown/Up`, `onNativeMouse`). События клавиатуры и мыши он не трогает.
-  Раскладка:
+### 6. Keyboard, mouse and gamepad support
+- **Keyboard:** works out of the box through SDL — hardware keys reach the engine
+  (`SDLSurface.onKey` → `SDLActivity.handleKeyEvent` → `CSDLKeyboard` reads the SDL events).
+- **Mouse:** works through SDL; the engine enables relative mode
+  (`SDL_SetWindowRelativeMouseMode`), so on Android 8+ SDL captures the pointer
+  (pointer capture) and a real mouse controls the view, as on a PC.
+- **Gamepad:** CryEngine 1 has no gamepad backend on Android, so a `GamepadMapper`
+  was added (pure Java, the engine and SDL are not modified). It intercepts gamepad
+  events at the `GameActivity.dispatchKeyEvent` / `dispatchGenericMotionEvent` level and
+  turns them into the same key/mouse injections the on-screen buttons use
+  (`onNativeKeyDown/Up`, `onNativeMouse`). It leaves keyboard and mouse events alone.
+  Layout:
 
-  | Элемент геймпада | Действие |
+  | Gamepad control | Action |
   | --- | --- |
-  | Левый стик / крестовина | Движение (W A S D) |
-  | Правый стик | Обзор (мышь, учитывает чувствительность из лаунчера) |
-  | RT / R2 / R1 | Огонь (ЛКМ) |
-  | LT / L2 | Прицел (ПКМ) |
-  | A | Прыжок (Space) |
-  | B | Присесть (C) |
-  | X | Перезарядка (R) |
-  | Y | Действие (F) |
-  | L1 | Спринт (Shift) |
-  | Клик левого стика | Лечь (V) |
-  | Клик правого стика | Граната (G) |
-  | Start / Mode | Меню (Esc) |
-  | Select / Back | Задачи / КПК (Tab) |
+  | Left stick / D-pad | Movement (W A S D) |
+  | Right stick | Look (mouse, uses the launcher's sensitivity) |
+  | RT / R2 / R1 | Fire (LMB) |
+  | LT / L2 | Aim (RMB) |
+  | A | Jump (Space) |
+  | B | Crouch (C) |
+  | X | Reload (R) |
+  | Y | Action (F) |
+  | L1 | Sprint (Shift) |
+  | Left stick click | Go prone (V) |
+  | Right stick click | Grenade (G) |
+  | Start / Mode | Menu (Esc) |
+  | Select / Back | Objectives / PDA (Tab) |
 
-- При паузе, потере фокуса или отключении геймпада `releaseAll()` отпускает все injected
-  клавиши/кнопки — ничего не «залипает».
-- Для игры с геймпадом/клавиатурой в лаунчере есть переключатель «Скрыть сенсорные кнопки».
+- On pause, focus loss or gamepad disconnection, `releaseAll()` releases every injected
+  key/button — nothing gets stuck.
+- For playing with a gamepad or keyboard, the launcher has a "Hide touch buttons" switch.
 
 ---
 
-## 🛠️ Сборка проекта
+## 🛠️ Building the project
 
-### Требования
-- Ubuntu 22.04+ или другой современный Linux x86_64
+### Requirements
+- Ubuntu 22.04+ or another modern x86_64 Linux
 - Android NDK r25c (`25.2.9519653`)
 - JDK 17
 - CMake 3.22+
 - Ninja / Make
 
-### Быстрая сборка через скрипт
+### Quick build with the script
 ```bash
-# 1. Сборка нативного движка и всех зависимостей под ARM64-v8a
+# 1. Build the native engine and all dependencies for ARM64-v8a
 ./buildscripts/build_android.sh --arch arm64 --release --ndk /path/to/android-ndk-r25c
 
-# 2. Сборка APK с помощью Gradle
+# 2. Build the APK with Gradle
 cd android
 ./gradlew :app:assembleRelease
 ```
-Готовый установочный файл APK будет находиться по пути:
+The APK will be at:
 `android/app/build/outputs/apk/release/app-release.apk`
 
 ---
 
-## 🚀 Автоматическая сборка в GitHub Actions
-Репозиторий настроен на автоматическую компиляцию при каждом пуше в ветку через GitHub Actions (`.github/workflows/build_android.yml`):
-- Полная компиляция C++ движка NearChuckle и зависимостей (SDL3, OpenAL, Vorbis, Ogg).
-- Сборка `driverloader` с `adrenotools`.
-- Генерация релизного `app-release.apk` со всеми упакованными `.so` библиотеками в `lib/arm64-v8a`.
-- Публикация готовых артефактов для загрузки:
+## 🚀 Automatic build with GitHub Actions
+The repository is set up to compile automatically on every push to the branch with GitHub Actions (`.github/workflows/build_android.yml`):
+- Full compilation of the NearChuckle C++ engine and its dependencies (SDL3, OpenAL, Vorbis, Ogg).
+- Build of `driverloader` with `adrenotools`.
+- Generation of a release `app-release.apk` with all the `.so` libraries packed in `lib/arm64-v8a`.
+- Publication of the finished artifacts for download:
   - `NearChuckle-FarCry-Android-APK`
   - `NearChuckle-FarCry-Native-SO-arm64-v8a`
