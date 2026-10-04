@@ -190,4 +190,6 @@
     <string name="act_quicksave">Sauvegarde rapide</string>
     <string name="act_quickload">Chargement rapide</string>
     <string name="btn_close_report">Fermer</string>
+    <string name="dialog_game_exit_title">Le jeu s’est arrêté</string>
+    <string name="dialog_game_exit_msg">Le processus du jeu s’est arrêté sans que vous l’ayez demandé.\n\nRaison : %1$s\n%2$s\n\nLes détails sont dans farcry_last_exit.txt, dans le dossier du jeu.</string>
 </resources>

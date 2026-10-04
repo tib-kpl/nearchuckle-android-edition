@@ -483,6 +483,11 @@ public class GameActivity extends SDLActivity {
             String gamePath = prefs.getString(LauncherActivity.KEY_GAME_PATH, "");
             LauncherActivity.cleanSystemConfigFiles(gamePath);
         } catch (Throwable ignored) {}
+        // An end on purpose (so the launcher does not report it as a crash).
+        try {
+            //noinspection ResultOfMethodCallIgnored
+            new File(getFilesDir(), LauncherActivity.EXIT_EXPECTED_MARKER).createNewFile();
+        } catch (Throwable ignored) {}
         // The game ended on its own (Quit in the game's menu): the whole app closes with it, instead of
         // leaving the launcher's settings behind. The launcher sees this marker when it comes back.
         if (!backToLauncher) {

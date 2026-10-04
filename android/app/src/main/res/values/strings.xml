@@ -190,4 +190,6 @@
     <string name="act_quicksave">Quick save</string>
     <string name="act_quickload">Quick load</string>
     <string name="btn_close_report">Close</string>
+    <string name="dialog_game_exit_title">The game stopped</string>
+    <string name="dialog_game_exit_msg">The game\'s process ended without being asked to.\n\nReason: %1$s\n%2$s\n\nThe details are in farcry_last_exit.txt, in the game folder.</string>
 </resources>

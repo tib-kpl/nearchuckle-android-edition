@@ -190,4 +190,6 @@
     <string name="act_quicksave">Быстрое сохранение</string>
     <string name="act_quickload">Быстрая загрузка</string>
     <string name="btn_close_report">Закрыть</string>
+    <string name="dialog_game_exit_title">Игра остановилась</string>
+    <string name="dialog_game_exit_msg">Процесс игры завершился без вашей команды.\n\nПричина: %1$s\n%2$s\n\nПодробности в farcry_last_exit.txt в папке игры.</string>
 </resources>

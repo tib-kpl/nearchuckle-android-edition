@@ -61,6 +61,9 @@ public class LauncherActivity extends Activity {
     public static final String KEY_AUTO_LAUNCH = "auto_launch";
     /** Written by the game when it ends by itself: the launcher then closes the app. */
     public static final String QUIT_APP_MARKER = "quit_app";
+    /** Written before the game's process ends on purpose (the player quit, or the launcher restarts it). */
+    public static final String EXIT_EXPECTED_MARKER = "exit_expected";
+    private static final String KEY_LAST_EXIT_SEEN = "last_game_exit_seen";
     public static final String KEY_VIDEO_FIT = "video_fit";
     public static final String KEY_AUTO_HIDE_PAD = "auto_hide_touch_with_gamepad";
     /** Set by the in-game settings button: show this menu instead of starting the game again. */
@@ -153,6 +156,83 @@ public class LauncherActivity extends Activity {
         setIntent(intent);
     }
 
+    private static String exitReasonName(int reason) {
+        switch (reason) {
+            case 1: return "EXIT_SELF";
+            case 2: return "SIGNALED";
+            case 3: return "LOW_MEMORY";
+            case 4: return "CRASH (Java)";
+            case 5: return "CRASH_NATIVE";
+            case 6: return "ANR";
+            case 7: return "INITIALIZATION_FAILURE";
+            case 8: return "PERMISSION_CHANGE";
+            case 9: return "EXCESSIVE_RESOURCE_USAGE";
+            case 10: return "USER_REQUESTED";
+            case 11: return "USER_STOPPED";
+            case 12: return "DEPENDENCY_DIED";
+            case 13: return "OTHER";
+            case 14: return "FREEZER";
+            case 15: return "PACKAGE_STATE_CHANGE";
+            case 16: return "PACKAGE_UPDATED";
+            default: return "reason " + reason;
+        }
+    }
+
+    /**
+     * When the game's process ended and nobody asked it to (a crash, the system killing it for memory,
+     * ...), says why: Android keeps the reason of each process exit. Shown once, and written in the game
+     * folder (farcry_last_exit.txt) to be read from a computer.
+     */
+    private void reportGameExit() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return;
+        try {
+            SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+            long seen = prefs.getLong(KEY_LAST_EXIT_SEEN, 0);
+            File expected = new File(getFilesDir(), EXIT_EXPECTED_MARKER);
+            boolean onPurpose = expected.exists();
+            if (onPurpose) {
+                //noinspection ResultOfMethodCallIgnored
+                expected.delete();
+            }
+            ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+            List<android.app.ApplicationExitInfo> exits = manager.getHistoricalProcessExitReasons(getPackageName(), 0, 8);
+            android.app.ApplicationExitInfo latest = null;
+            for (android.app.ApplicationExitInfo info : exits) {
+                String name = info.getProcessName();
+                if (name != null && name.endsWith(":game") && info.getTimestamp() > seen
+                        && (latest == null || info.getTimestamp() > latest.getTimestamp())) {
+                    latest = info;
+                }
+            }
+            if (latest == null) return;
+            prefs.edit().putLong(KEY_LAST_EXIT_SEEN, latest.getTimestamp()).commit();
+            if (seen == 0 || onPurpose) return;   // first run, or the player ended it
+            int reason = latest.getReason();
+            if (reason == 1 || reason == 10 || reason == 11) return;   // a normal end
+
+            String text = "reason: " + exitReasonName(reason) + "\n"
+                    + "status: " + latest.getStatus() + "\n"
+                    + "description: " + latest.getDescription() + "\n"
+                    + "rss (kB): " + latest.getRss() + "  pss (kB): " + latest.getPss() + "\n"
+                    + "time: " + new java.util.Date(latest.getTimestamp()) + "\n";
+            try {
+                File dir = new File(editGamePath.getText().toString().trim());
+                if (dir.isDirectory()) {
+                    try (java.io.FileOutputStream out = new java.io.FileOutputStream(new File(dir, "farcry_last_exit.txt"))) {
+                        out.write(text.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                    }
+                }
+            } catch (Exception ignored) {}
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.dialog_game_exit_title)
+                    .setMessage(getString(R.string.dialog_game_exit_msg, exitReasonName(reason),
+                            String.valueOf(latest.getDescription())))
+                    .setPositiveButton(R.string.ok, null)
+                    .show();
+        } catch (Throwable ignored) {
+        }
+    }
+
     /** The pid of the game's own process, or -1 when no game is running. */
     private int gameProcessPid() {
         ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
@@ -208,6 +288,7 @@ public class LauncherActivity extends Activity {
             finishAndRemoveTask();
             return;
         }
+        reportGameExit();
         updateResumeButton();
         // the game may have shown or hidden the touch controls
         switchHideControls.setChecked(TouchControls.isHidden(this));
@@ -1063,6 +1144,10 @@ public class LauncherActivity extends Activity {
                     .setTitle(R.string.dialog_restart_title)
                     .setMessage(R.string.dialog_restart_msg)
                     .setPositiveButton(R.string.btn_restart, (dialog, which) -> {
+                        try {
+                            //noinspection ResultOfMethodCallIgnored
+                            new File(getFilesDir(), EXIT_EXPECTED_MARKER).createNewFile();
+                        } catch (Exception ignored) {}
                         android.os.Process.killProcess(running);
                         new Handler(Looper.getMainLooper()).postDelayed(this::launchGame, 700);
                     })
