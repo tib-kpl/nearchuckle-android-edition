@@ -1653,7 +1653,12 @@ public:
 		if (!pCVar)
 			return;
 		static const char *const s_skip[] = { "r_Driver", "r_Width", "r_Height", "r_Fullscreen", "r_ColorBits",
-			"r_DepthBits", "r_StencilBits", "g_language", "r_GL_NV30_PS20", "sys_firstlaunch", 0 };
+			"r_DepthBits", "r_StencilBits", "g_language", "r_GL_NV30_PS20", "sys_firstlaunch",
+			// set by the launcher (graphics compatibility level) on each start
+			"r_NoPS20", "r_Quality_BumpMapping", "r_NoBumpmap", "r_TexNormalMapCompressed",
+			"r_ShaderTerrainDOT3", "r_ShaderTerrainSpecular", "r_DetailTextures", "e_detail_texture_quality",
+			// render targets that GL4ES does not give: the scene comes out black
+			"r_HDRRendering", "r_HDRLevel", "r_FSAA", "r_FSAA_quality", "r_FSAA_samples", "r_RenderMode", 0 };
 		for (int i = 0; s_skip[i]; i++)
 		{
 			if (!stricmp(pCVar->GetName(), s_skip[i]))

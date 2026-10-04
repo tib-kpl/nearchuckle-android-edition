@@ -233,6 +233,21 @@ void CSystemConfiguration::ParseSystemConfig()
 						{
 							continue;
 						}
+						{
+							// launcher-controlled renderer paths, and effects drawn black through GL4ES
+							static const char *const s_androidSkip[] = { "r_NoBumpmap", "r_TexNormalMapCompressed",
+								"r_ShaderTerrainDOT3", "r_ShaderTerrainSpecular", "r_DetailTextures", "e_detail_texture_quality",
+								"r_HDRRendering", "r_HDRLevel", "r_FSAA", "r_FSAA_quality", "r_FSAA_samples", "r_RenderMode", 0 };
+							bool bSkip = false;
+							for (int i = 0; s_androidSkip[i]; i++)
+								if (strcasecmp(strKey.c_str(), s_androidSkip[i]) == 0)
+									bSkip = true;
+							if (bSkip)
+							{
+								m_pSystem->GetILog()->Log("Android: ignoring '%s'='%s' from %s", strKey.c_str(), strValue.c_str(), m_strSysConfigFilePath.c_str());
+								continue;
+							}
+						}
 						if (strcasecmp(strKey.c_str(), "r_NoPS20") == 0 && atoi(strValue.c_str()) != 0)
 						{
 							m_pSystem->GetILog()->Log("Android: ignoring system.cfg r_NoPS20=1 (must remain 0)");

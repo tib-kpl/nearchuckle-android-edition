@@ -200,4 +200,8 @@
     <string name="switch_no_tex_compression">Ne pas utiliser les textures compressées</string>
     <string name="pause_quick_save">Sauvegarde rapide (F5)</string>
     <string name="pause_quick_load">Chargement rapide (F9)</string>
+    <string name="btn_reset_game_settings">Réinitialiser les réglages du jeu (vidéo, son)</string>
+    <string name="dialog_reset_game_settings">Les réglages enregistrés par le menu Options du jeu sont supprimés : le prochain lancement utilisera les réglages par défaut.</string>
+    <string name="toast_game_settings_reset">Réglages du jeu réinitialisés</string>
+    <string name="toast_game_settings_not_reset">Impossible de supprimer android_settings.cfg</string>
 </resources>

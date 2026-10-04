@@ -738,6 +738,22 @@ public class LauncherActivity extends Activity {
         btnResumeGame.setOnClickListener(v -> resumeGame());
         findViewById(R.id.btn_gamepad_settings).setOnClickListener(v ->
                 startActivity(new Intent(this, GamepadSettingsActivity.class)));
+        findViewById(R.id.btn_reset_game_settings).setOnClickListener(v -> confirmResetGameSettings());
+    }
+
+    /** Removes the settings the game saved (android_settings.cfg): the next start uses the defaults. */
+    private void confirmResetGameSettings() {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.btn_reset_game_settings)
+                .setMessage(R.string.dialog_reset_game_settings)
+                .setPositiveButton(android.R.string.ok, (d, w) -> {
+                    File settings = new File(editGamePath.getText().toString().trim(), "android_settings.cfg");
+                    boolean done = !settings.exists() || settings.delete();
+                    Toast.makeText(this, done ? R.string.toast_game_settings_reset : R.string.toast_game_settings_not_reset,
+                            Toast.LENGTH_LONG).show();
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
     }
 
     private static final String SHADERS_URL = "https://rohitcodes.fyi/nearchuckle/files/shadercache/GL_Shaders_20260517.pak";

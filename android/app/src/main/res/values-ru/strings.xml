@@ -200,4 +200,8 @@
     <string name="switch_no_tex_compression">Не использовать сжатые текстуры</string>
     <string name="pause_quick_save">Быстрое сохранение (F5)</string>
     <string name="pause_quick_load">Быстрая загрузка (F9)</string>
+    <string name="btn_reset_game_settings">Сбросить настройки игры (видео, звук)</string>
+    <string name="dialog_reset_game_settings">Настройки, сохранённые меню игры, будут удалены: при следующем запуске используются настройки по умолчанию.</string>
+    <string name="toast_game_settings_reset">Настройки игры сброшены</string>
+    <string name="toast_game_settings_not_reset">Не удалось удалить android_settings.cfg</string>
 </resources>

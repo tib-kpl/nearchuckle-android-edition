@@ -46,6 +46,7 @@ struct ALScopedTimer
 #define MIN_QUEUED_BUFFERS 20
 // Buffers queued before playback starts, so the beginning of streamed music is not starved.
 #define STREAM_PREFILL_BUFFERS 4
+#define CS_STREAM_PULL 0x40000000
 
 #ifndef __linux
 #define __builtin_trap void
@@ -89,6 +90,9 @@ typedef struct
 #endif
 	ALuint source;
 	int channel;
+	// A stream whose callback says whether it had data (1) or not yet (0), always as 16-bit
+	// stereo of "len" bytes: only real data is queued (the videos' sound, see UIVideoBinkDec).
+	bool pull = false;
 } ALStream_t;
 
 ALCdevice* aldevice;
@@ -730,6 +734,7 @@ DLL_API CS_STREAM* F_API CS_Stream_Create(CS_STREAMCALLBACK callback, int length
 	stream->callback = callback;
 	stream->userdata = userdata;
 	stream->channel = CS_FREE;
+	stream->pull = (mode & CS_STREAM_PULL) != 0;
 
 	memset(stream->buffer, 0, length);
 
@@ -812,7 +817,7 @@ DLL_API int             F_API CS_Stream_PlayEx(int channel, CS_STREAM* stream, C
 	alSource3f(strm->source, AL_POSITION, 0.0f, 0.0f, 0.0f);
 	alSource3f(strm->source, AL_VELOCITY, 0.0f, 0.0f, 0.0f);
 
-	if (strm->callback)
+	if (strm->callback && !strm->pull)
 	{
 		// Queue a few buffers before starting instead of a single one: with only one small
 		// buffer queued the source starves on the first frames and the music crackles.
@@ -1015,6 +1020,25 @@ static void UpdateStream(ALStream_t* stream)
 	}
 
 	alGetSourcei(stream->source, AL_BUFFERS_QUEUED, &num_queued_buffers);
+
+	if (stream->pull && stream->callback)
+	{
+		// everything the producer has, as it comes
+		while (num_queued_buffers < MIN_QUEUED_BUFFERS * 4 &&
+			stream->callback((CS_STREAM*)stream, stream->buffer, stream->len, stream->userdata))
+		{
+			alGenBuffers(1, &stream_buf);
+			alBufferData(stream_buf, AL_FORMAT_STEREO16, (ALvoid *)stream->buffer, stream->len, stream->sample_rate);
+			alSourceQueueBuffers(stream->source, 1, &stream_buf);
+			num_queued_buffers++;
+		}
+		alGetSourcei(stream->source, AL_SOURCE_STATE, &state);
+		if (num_queued_buffers > 0 && state != AL_PLAYING && state != AL_PAUSED)
+		{
+			alSourcePlay(stream->source);
+		}
+		return;
+	}
 
 	if (num_queued_buffers < MIN_QUEUED_BUFFERS && stream->callback)
 	{

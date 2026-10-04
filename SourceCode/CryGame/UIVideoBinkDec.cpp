@@ -1,4 +1,7 @@
 #include <list>
+#include <deque>
+#include <algorithm>
+#include <SDL3/SDL_mutex.h>
 #include "StdAfx.h"
 #include "ISound.h"
 #include <ICryPak.h>
@@ -29,7 +32,17 @@ struct MoviePlayerData
 	float frameRate;
 	unsigned int vidWidth;
 	unsigned int vidHeight;
+	// The sound decoded with the frames, as 16-bit stereo, waiting for the sound system (which
+	// takes it in fixed blocks through BinkDecAudioCallback).
+	std::deque<int16_t> pcm;
+	SDL_Mutex* pcmMutex = nullptr;
+	uint8_t* audioScratch = nullptr;
 };
+
+// block of sound handed to the sound system at a time: 1024 stereo frames
+static const int kBinkAudioBlockBytes = 1024 * 2 * sizeof(int16_t);
+// the sound system's "pull" stream (OpenALSound.cpp): only the blocks the callback has are queued
+#define CS_STREAM_PULL 0x40000000
 
 static MoviePlayerData* CreatePlayerData(const char* filename)
 {
@@ -134,23 +147,54 @@ CUIVideoBinkDecoder::CUIVideoBinkDecoder(const char* aliasName)
 signed char BinkDecAudioCallback(CS_STREAM* pStream, void* pBuffer, int nLength, void* nParam)
 {
 	MoviePlayerData* player = (MoviePlayerData*)nParam;
-	int16_t* audioBuffer = (int16_t*)pBuffer;
-	memset(audioBuffer, -1, nLength);
-	if (!player)
-	{
+	if (!player || !player->pcmMutex)
 		return 0;
-	}
-	if (player->framePos < 0)
+	SDL_LockMutex(player->pcmMutex);
+	const size_t samples = nLength / sizeof(int16_t);
+	bool ok = player->pcm.size() >= samples;
+	if (ok)
 	{
-		return 0;
+		int16_t* out = (int16_t*)pBuffer;
+		std::copy(player->pcm.begin(), player->pcm.begin() + samples, out);
+		player->pcm.erase(player->pcm.begin(), player->pcm.begin() + samples);
 	}
-	if (player->lastFramePos == player->framePos)
-	{
-		return 0;
-	}
+	SDL_UnlockMutex(player->pcmMutex);
+	return ok ? 1 : 0;
+}
 
-	Bink_GetAudioData(player->binkHandle, player->trackIndex, audioBuffer);
-	return 1;
+/** The sound of the frame just decoded, added to the queue (as stereo). */
+static void BinkQueueFrameAudio(MoviePlayerData* player)
+{
+	if (!player->pcmMutex || !player->audioScratch)
+		return;
+	uint32_t bytes = Bink_GetAudioData(player->binkHandle, player->trackIndex, (int16_t*)player->audioScratch);
+	if (bytes > player->binkInfo.idealBufferSize)
+		bytes = player->binkInfo.idealBufferSize;
+	const int16_t* in = (const int16_t*)player->audioScratch;
+	const uint32_t n = bytes / sizeof(int16_t);
+	SDL_LockMutex(player->pcmMutex);
+	if (player->binkInfo.nChannels == 1)
+	{
+		for (uint32_t i = 0; i < n; i++)
+		{
+			player->pcm.push_back(in[i]);
+			player->pcm.push_back(in[i]);
+		}
+	}
+	else
+	{
+		player->pcm.insert(player->pcm.end(), in, in + n);
+	}
+	SDL_UnlockMutex(player->pcmMutex);
+}
+
+static void BinkClearAudio(MoviePlayerData* player)
+{
+	if (!player || !player->pcmMutex)
+		return;
+	SDL_LockMutex(player->pcmMutex);
+	player->pcm.clear();
+	SDL_UnlockMutex(player->pcmMutex);
 }
 
 bool CUIVideoBinkDecoder::Init(const char* pathToVideo, bool needSound)
@@ -181,9 +225,14 @@ bool CUIVideoBinkDecoder::Init(const char* pathToVideo, bool needSound)
 			{
 				m_player->trackIndex = 0;
 				m_player->binkInfo = Bink_GetAudioTrackDetails(m_player->binkHandle, m_player->trackIndex);
-				m_audioStream = CS_Stream_Create(BinkDecAudioCallback,
-					m_player->binkInfo.idealBufferSize, 0,
-					m_player->binkInfo.sampleRate, m_player);
+				if (m_player->binkInfo.idealBufferSize > 0 && m_player->binkInfo.nChannels >= 1 && m_player->binkInfo.nChannels <= 2)
+				{
+					m_player->pcmMutex = SDL_CreateMutex();
+					m_player->audioScratch = new uint8_t[m_player->binkInfo.idealBufferSize];
+					m_audioStream = CS_Stream_Create(BinkDecAudioCallback,
+						kBinkAudioBlockBytes, CS_STREAM_PULL,
+						m_player->binkInfo.sampleRate, m_player);
+				}
 			}
 		}
 	}
@@ -195,18 +244,21 @@ void CUIVideoBinkDecoder::Terminate()
 {
 	Stop();
 
-	if (m_player)
-	{
-		Bink_Close(m_player->binkHandle);
-	}
-	SAFE_DELETE(m_player);
-	SAFE_DELETE_ARRAY(m_frameBuffer);
-	
 	if (m_audioStream)
 	{
 		CS_Stream_Close(m_audioStream);
 	}
 	m_audioStream = nullptr;
+
+	if (m_player)
+	{
+		Bink_Close(m_player->binkHandle);
+		if (m_player->pcmMutex)
+			SDL_DestroyMutex(m_player->pcmMutex);
+		delete[] m_player->audioScratch;
+	}
+	SAFE_DELETE(m_player);
+	SAFE_DELETE_ARRAY(m_frameBuffer);
 
 	if (m_textureId > -1)
 	{
@@ -240,6 +292,7 @@ void CUIVideoBinkDecoder::Stop()
 
 	if (m_audioStream)
 		CS_Stream_Stop(m_audioStream);
+	BinkClearAudio(m_player);
 }
 
 void CUIVideoBinkDecoder::Rewind()
@@ -256,6 +309,7 @@ void CUIVideoBinkDecoder::BinkDecReset()
 {
 	m_player->framePos = -1;
 	m_player->lastFramePos = -1;
+	BinkClearAudio(m_player);
 
 	Bink_GotoFrame( m_player->binkHandle, 0 );
 }
@@ -374,6 +428,8 @@ void CUIVideoBinkDecoder::Present()
 	while(player->framePos < desiredFrame)
 	{
 		player->framePos = Bink_GetNextFrame(player->binkHandle, player->yuvBuffer);
+		if (m_audioStream)
+			BinkQueueFrameAudio(player);
 	}
 
 	DrawYUV();
