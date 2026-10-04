@@ -8,7 +8,11 @@ import android.view.MotionEvent;
 
 import org.libsdl.app.SDLActivity;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -30,6 +34,9 @@ import java.util.Set;
  *   Left stick click        - prone (V)
  *   Right stick click       - grenade (G)
  *   Start / Mode            - menu (Esc)
+ *
+ * In a menu (the engine says so, see menuUp()): A clicks, B is Esc, the D-Pad and the left stick are
+ * the arrow keys; the right stick still moves the cursor.
  *   Select / Back           - objectives / PDA (Tab)
  *
  * The mapper only reacts to events whose source is a gamepad / joystick / D-Pad, so hardware
@@ -53,6 +60,44 @@ public final class GamepadMapper {
 
     public GamepadMapper(Context context) {
         this.context = context;
+    }
+
+    // -----------------------------------------------------------------------------------------
+    // Menu or game: the engine writes ".gamepad_menu_state" ("1" in a menu) in the game folder
+    // -----------------------------------------------------------------------------------------
+
+    private static final long MENU_POLL_MS = 150;
+    private static final int ACTION_CLICK = 0x10000;   // a "key" that is the left mouse button
+    private long lastMenuPoll;
+    private boolean menuState;
+    /** What each pad button did when it went down, so it is undone the same way on release. */
+    private final Map<Integer, Integer> pressedAs = new HashMap<>();
+
+    private boolean menuUp() {
+        long now = android.os.SystemClock.uptimeMillis();
+        if (now - lastMenuPoll >= MENU_POLL_MS) {
+            lastMenuPoll = now;
+            boolean was = menuState;
+            menuState = readMenuState();
+            if (menuState != was) {
+                releaseAll();   // nothing pressed in one mode may stay held in the other
+                pressedAs.clear();
+            }
+        }
+        return menuState;
+    }
+
+    private boolean readMenuState() {
+        try {
+            SharedPreferences prefs = context.getSharedPreferences(LauncherActivity.PREFS_NAME, Context.MODE_PRIVATE);
+            File state = new File(prefs.getString(LauncherActivity.KEY_GAME_PATH, ""), ".gamepad_menu_state");
+            if (!state.isFile()) return false;
+            try (FileInputStream in = new FileInputStream(state)) {
+                return in.read() == '1';
+            }
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     // -----------------------------------------------------------------------------------------
@@ -81,19 +126,46 @@ public final class GamepadMapper {
                 return true;
         }
 
-        int mapped = mapButton(event.getKeyCode());
-        if (mapped == 0) {
-            // Unknown pad button: do not let it leak into the game as a random key.
-            return true;
-        }
+        final int code = event.getKeyCode();
         if (down) {
-            if (event.getRepeatCount() == 0) {
+            if (event.getRepeatCount() != 0) {
+                return true;
+            }
+            int mapped = menuUp() ? mapMenuButton(code) : 0;
+            if (mapped == 0) {
+                mapped = mapButton(code);
+            }
+            if (mapped == 0) {
+                // Unknown pad button: do not let it leak into the game as a random key.
+                return true;
+            }
+            pressedAs.put(code, mapped);
+            if (mapped == ACTION_CLICK) {
+                pressMouse(SDL_BUTTON_LEFT);
+            } else {
                 pressKey(mapped);
             }
         } else {
-            releaseKey(mapped);
+            Integer mapped = pressedAs.remove(code);
+            if (mapped == null) {
+                mapped = mapButton(code);
+            }
+            if (mapped == ACTION_CLICK) {
+                releaseMouse(SDL_BUTTON_LEFT);
+            } else if (mapped != 0) {
+                releaseKey(mapped);
+            }
         }
         return true;
+    }
+
+    /** What a button does in a menu, where it differs from the game (0: as in the game). */
+    private static int mapMenuButton(int keyCode) {
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_BUTTON_A: return ACTION_CLICK;                // choose
+            case KeyEvent.KEYCODE_BUTTON_B: return KeyEvent.KEYCODE_ESCAPE;     // back
+            default:                        return 0;
+        }
     }
 
     private static int mapButton(int keyCode) {
@@ -109,10 +181,10 @@ public final class GamepadMapper {
             case KeyEvent.KEYCODE_BUTTON_MODE:   return KeyEvent.KEYCODE_ESCAPE;      // menu
             case KeyEvent.KEYCODE_BUTTON_SELECT:
             case KeyEvent.KEYCODE_BACK:          return KeyEvent.KEYCODE_TAB;         // objectives
-            case KeyEvent.KEYCODE_DPAD_UP:       return KeyEvent.KEYCODE_W;
-            case KeyEvent.KEYCODE_DPAD_DOWN:     return KeyEvent.KEYCODE_S;
-            case KeyEvent.KEYCODE_DPAD_LEFT:     return KeyEvent.KEYCODE_A;
-            case KeyEvent.KEYCODE_DPAD_RIGHT:    return KeyEvent.KEYCODE_D;
+            case KeyEvent.KEYCODE_DPAD_UP:       return KeyEvent.KEYCODE_DPAD_UP;
+            case KeyEvent.KEYCODE_DPAD_DOWN:     return KeyEvent.KEYCODE_DPAD_DOWN;
+            case KeyEvent.KEYCODE_DPAD_LEFT:     return KeyEvent.KEYCODE_DPAD_LEFT;
+            case KeyEvent.KEYCODE_DPAD_RIGHT:    return KeyEvent.KEYCODE_DPAD_RIGHT;
             default:                             return 0;
         }
     }
@@ -130,10 +202,15 @@ public final class GamepadMapper {
         // Left stick -> WASD
         float lx = applyDeadzone(event.getAxisValue(MotionEvent.AXIS_X));
         float ly = applyDeadzone(event.getAxisValue(MotionEvent.AXIS_Y));
-        setMovementKey(KeyEvent.KEYCODE_W, ly < -STICK_DEADZONE, moveW); moveW = ly < -STICK_DEADZONE;
-        setMovementKey(KeyEvent.KEYCODE_S, ly >  STICK_DEADZONE, moveS); moveS = ly >  STICK_DEADZONE;
-        setMovementKey(KeyEvent.KEYCODE_A, lx < -STICK_DEADZONE, moveA); moveA = lx < -STICK_DEADZONE;
-        setMovementKey(KeyEvent.KEYCODE_D, lx >  STICK_DEADZONE, moveD); moveD = lx >  STICK_DEADZONE;
+        boolean inMenu = menuUp();
+        int up = inMenu ? KeyEvent.KEYCODE_DPAD_UP : KeyEvent.KEYCODE_W;
+        int down = inMenu ? KeyEvent.KEYCODE_DPAD_DOWN : KeyEvent.KEYCODE_S;
+        int left = inMenu ? KeyEvent.KEYCODE_DPAD_LEFT : KeyEvent.KEYCODE_A;
+        int right = inMenu ? KeyEvent.KEYCODE_DPAD_RIGHT : KeyEvent.KEYCODE_D;
+        setMovementKey(up, ly < -STICK_DEADZONE, moveW); moveW = ly < -STICK_DEADZONE;
+        setMovementKey(down, ly >  STICK_DEADZONE, moveS); moveS = ly >  STICK_DEADZONE;
+        setMovementKey(left, lx < -STICK_DEADZONE, moveA); moveA = lx < -STICK_DEADZONE;
+        setMovementKey(right, lx >  STICK_DEADZONE, moveD); moveD = lx >  STICK_DEADZONE;
 
         // Right stick -> relative mouse look (honours the launcher mouse sensitivity)
         float rx = applyDeadzone(event.getAxisValue(MotionEvent.AXIS_Z));

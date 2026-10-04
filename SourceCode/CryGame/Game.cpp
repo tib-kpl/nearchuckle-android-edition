@@ -798,6 +798,24 @@ bool CXGame::IsInPause(IProcess *pProcess)
 //! update all game and children
 bool CXGame::Update()
 {
+#if defined(__ANDROID__)
+	{
+		// Tells the Java gamepad mapper whether a menu is up (A clicks there, jumps in game): a one
+		// character file in the game folder, rewritten when the state changes.
+		static int s_lastMenuState = -1;
+		int nowMenu = (m_bMenuOverlay || m_bUIOverlay) ? 1 : 0;
+		if (nowMenu != s_lastMenuState)
+		{
+			s_lastMenuState = nowMenu;
+			FILE *pState = fopen(".gamepad_menu_state", "wb");
+			if (pState)
+			{
+				fputc(nowMenu ? '1' : '0', pState);
+				fclose(pState);
+			}
+		}
+	}
+#endif
 	if (!m_nDEBUG_TIMING)
 	{
 		m_fDEBUG_STARTTIMER = m_pSystem->GetITimer()->GetAsyncCurTime();
