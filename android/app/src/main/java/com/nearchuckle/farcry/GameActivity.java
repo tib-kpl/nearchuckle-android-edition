@@ -114,6 +114,14 @@ public class GameActivity extends SDLActivity {
                 Os.setenv("FC_GL_BACKEND", "zink", true);
                 Os.setenv("GALLIUM_DRIVER", "zink", true);
                 Os.setenv("MESA_LOADER_DRIVER_OVERRIDE", "zink", true);
+                // Mesa keeps the shaders it compiled (for Vulkan) on disk, so that the next loads
+                // do not compile them again; it needs a folder it can write to
+                File shaderCache = new File(getCacheDir(), "mesa_shader_cache");
+                //noinspection ResultOfMethodCallIgnored
+                shaderCache.mkdirs();
+                Os.setenv("MESA_SHADER_CACHE_DIR", shaderCache.getAbsolutePath(), true);
+                Os.setenv("MESA_SHADER_CACHE_MAX_SIZE", "512M", true);
+                Os.setenv("XDG_CACHE_HOME", getCacheDir().getAbsolutePath(), true);
                 Log.i(TAG, "Renderer: Mesa Zink (OSMesa).");
             } catch (ErrnoException e) {
                 Log.e(TAG, "Failed setting Zink environment variables", e);
