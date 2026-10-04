@@ -201,7 +201,7 @@
     <string name="pause_quick_save">Quick save (F5)</string>
     <string name="pause_quick_load">Quick load (F9)</string>
     <string name="btn_reset_game_settings">Reset the game settings (video, sound)</string>
-    <string name="dialog_reset_game_settings">The settings saved by the game's options menu are removed: the next start uses the defaults.</string>
+    <string name="dialog_reset_game_settings">The settings saved by the game options menu are removed: the next start uses the defaults.</string>
     <string name="toast_game_settings_reset">Game settings reset</string>
     <string name="toast_game_settings_not_reset">Could not remove android_settings.cfg</string>
 </resources>
