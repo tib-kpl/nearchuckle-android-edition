@@ -11,6 +11,9 @@
 //////////////////////////////////////////////////////////////////////
  
 #include "StdAfx.h"
+#include <sys/stat.h>
+#include <errno.h>
+#include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <IStreamEngine.h>
@@ -2221,62 +2224,43 @@ ITagPointManager* CXGame::GetTagPointManager()
 string CXGame::GetPlayerProfilePath()
 {
 #ifdef __linux
-	DIR *fdir;
-	int found_profiles = 0;
-	int found_player = 0;
-	struct dirent *d;
+	// The folder of the profile: "<the Profiles folder>/<the Player folder>/", whatever the case of
+	// their names on the device (the file system is case sensitive). A game folder copied without
+	// them, as a fresh install is, gets them made: this used to trap (__builtin_trap), ending the game
+	// as soon as the saved games were listed (Campaign).
 	string ret;
 
-	fdir = opendir(".");
-	if (fdir == NULL)
+	for (int pass = 0; pass < 2; pass++)
 	{
-		__builtin_trap();
-		closedir(fdir);
-		return "";
-	}
+		const char *szWanted = pass == 0 ? "profiles" : "player";
+		const char *szMade = pass == 0 ? "Profiles" : "Player";
+		string found;
 
-	while ((d = readdir(fdir)) != NULL)
-	{
-		if ((d->d_type == DT_DIR || d->d_type == DT_LNK) && !strcasecmp(d->d_name, "profiles"))
+		DIR *fdir = opendir(ret.empty() ? "." : ret.c_str());
+		if (fdir)
 		{
-			found_profiles = 1;
-			ret += d->d_name;
-			ret += "/";
-			break;
+			struct dirent *d;
+			while ((d = readdir(fdir)) != NULL)
+			{
+				if ((d->d_type == DT_DIR || d->d_type == DT_LNK) && !strcasecmp(d->d_name, szWanted))
+				{
+					found = d->d_name;
+					break;
+				}
+			}
+			closedir(fdir);
 		}
-	}
-
-	closedir(fdir);
-	if (!found_profiles)
-	{
-		__builtin_trap();
-		return "";
-	}
-
-	fdir = opendir(ret.c_str());
-
-	if (fdir == NULL)
-	{
-		__builtin_trap();
-		closedir(fdir);
-		return "";
-	}
-
-	while ((d = readdir(fdir)) != NULL)
-	{
-		if ((d->d_type == DT_DIR || d->d_type == DT_LNK) && !strcasecmp(d->d_name, "player"))
+		if (found.empty())
 		{
-			found_player = 1;
-			ret += d->d_name;
-			ret += "/";
-			break;
+			found = szMade;
+			string path = ret + found;
+			if (mkdir(path.c_str(), 0775) != 0 && errno != EEXIST)
+			{
+				m_pLog->LogError("Cannot make the folder %s (%s)", path.c_str(), strerror(errno));
+			}
 		}
-	}
-
-	if (!found_player)
-	{
-		__builtin_trap();
-		return "";
+		ret += found;
+		ret += "/";
 	}
 
 	return ret;
