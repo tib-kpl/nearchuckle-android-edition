@@ -805,6 +805,14 @@ bool CXGame::Update()
 {
 #if defined(__ANDROID__)
 	{
+		// The water's reflection is drawn into a texture that comes out black through GL4ES (the
+		// water turns black from the "medium" water quality up): kept off, even when the options
+		// menu turns it on.
+		static ICVar *s_pWaterReflections = m_pSystem->GetIConsole()->GetCVar("r_WaterReflections");
+		if (s_pWaterReflections && s_pWaterReflections->GetIVal() != 0)
+			s_pWaterReflections->Set(0);
+	}
+	{
 		// Tells the Java gamepad mapper whether a menu is up (A clicks there, jumps in game): a one
 		// character file in the game folder, rewritten when the state changes.
 		// Commands from the Java gamepad mapper, one character each, appended to
