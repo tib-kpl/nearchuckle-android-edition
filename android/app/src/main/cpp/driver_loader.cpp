@@ -302,13 +302,25 @@ Java_com_nearchuckle_farcry_driver_DriverHook_nativeInitDriver(
         LOGI("Found custom Turnip driver at %s, hooking with adrenotools...", fullDriverPath.c_str());
 
         int featureFlags = ADRENOTOOLS_DRIVER_CUSTOM;
+        // adrenotools joins the folder and the file name as they are (and its hook keeps both):
+        // the folder ends with '/', in strings that last as long as the process
+        static std::string s_driverDir;
+        static std::string s_driverName;
+        s_driverDir = customDriverDir;
+        if (!s_driverDir.empty() && s_driverDir.back() != '/')
+            s_driverDir += '/';
+        s_driverName = customDriverName;
+        static std::string s_hookLibDir;
+        s_hookLibDir = hookLibDir ? hookLibDir : "";
+        if (!s_hookLibDir.empty() && s_hookLibDir.back() != '/')
+            s_hookLibDir += '/';
         g_customVulkanHandle = adrenotools_open_libvulkan(
                 RTLD_NOW,
                 featureFlags,
                 nullptr, // tmpLibDir
-                hookLibDir,
-                customDriverDir,
-                customDriverName,
+                s_hookLibDir.c_str(),
+                s_driverDir.c_str(),
+                s_driverName.c_str(),
                 nullptr, // fileRedirectDir
                 nullptr  // userMappingHandle
         );
