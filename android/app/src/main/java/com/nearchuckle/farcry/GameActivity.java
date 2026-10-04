@@ -297,6 +297,11 @@ public class GameActivity extends SDLActivity {
         // (SDLSurface.onKey / relative-mouse pointer capture), but CryEngine 1 has no gamepad
         // backend on Android, so the pad is translated into keys / mouse here.
         gamepadMapper = new GamepadMapper(this);
+        // a long press of Select opens the game menu, as the gear does for the touch screen
+        gamepadMapper.setOnMenuRequest(() -> runOnUiThread(() -> {
+            gamepadMapper.releaseAll();
+            showPauseMenu();
+        }));
     }
 
     // Hardware keyboard and mouse events keep flowing through SDL as before; only gamepad

@@ -156,8 +156,61 @@ public final class GamepadMapper {
         return true;
     }
 
+    private static final long LONG_PRESS_MS = 600;
+    private Runnable onMenuRequest;
+    private boolean selectHeld;
+    private boolean selectLong;
+    private final Runnable selectLongPress = new Runnable() {
+        @Override
+        public void run() {
+            if (selectHeld && !selectLong) {
+                selectLong = true;
+                if (onMenuRequest != null) {
+                    onMenuRequest.run();
+                }
+            }
+        }
+    };
+
+    /** What a long press of Select (Back) does: the game menu (save, load, settings, quit), for a pad alone. */
+    public void setOnMenuRequest(Runnable request) {
+        this.onMenuRequest = request;
+    }
+
+    /**
+     * Select / Back: a short press is what it was (objectives, Tab), a long one opens the game menu,
+     * which the touch screen has as a gear button, so that a pad alone reaches it.
+     */
+    private void selectButton(int code, boolean down) {
+        if (down) {
+            if (selectHeld) {
+                return;
+            }
+            selectHeld = true;
+            selectLong = false;
+            handler.postDelayed(selectLongPress, LONG_PRESS_MS);
+        } else {
+            handler.removeCallbacks(selectLongPress);
+            boolean wasLong = selectLong;
+            selectHeld = false;
+            selectLong = false;
+            if (!wasLong) {
+                // the short press: pressed and released now, a moment apart
+                final int target = resolve(code);
+                if (target != 0) {
+                    apply(target, true);
+                    handler.postDelayed(() -> apply(target, false), 80);
+                }
+            }
+        }
+    }
+
     /** A pad button (a real one, or a trigger read as one) goes down or up. */
     private void padButton(int code, boolean down) {
+        if (onMenuRequest != null && (code == KeyEvent.KEYCODE_BUTTON_SELECT || code == KeyEvent.KEYCODE_BACK)) {
+            selectButton(code, down);
+            return;
+        }
         if (down) {
             if (pressedAs.containsKey(code)) {
                 return;
