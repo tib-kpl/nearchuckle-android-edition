@@ -198,4 +198,6 @@
     <string name="gfx_compat_bump">2 - 1 + sans bump mapping</string>
     <string name="gfx_compat_ps">3 - 2 + sans pixel shaders 2.0</string>
     <string name="switch_no_tex_compression">Ne pas utiliser les textures compressées</string>
+    <string name="pause_quick_save">Sauvegarde rapide (F5)</string>
+    <string name="pause_quick_load">Chargement rapide (F9)</string>
 </resources>

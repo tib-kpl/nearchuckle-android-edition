@@ -222,6 +222,8 @@ public class GameActivity extends SDLActivity {
         if (compat >= 1) {
             args.add("\"r_ShaderTerrainDOT3 0\"");
             args.add("\"r_ShaderTerrainSpecular 0\"");
+            args.add("\"r_DetailTextures 0\"");
+            args.add("\"e_detail_texture_quality 0\"");
         }
         if (compat >= 2) {
             args.add("\"r_NoBumpmap 1\"");
@@ -383,6 +385,8 @@ public class GameActivity extends SDLActivity {
         boolean hidden = oscContainer != null && oscContainer.getVisibility() != View.VISIBLE;
         String[] items = {
                 getString(R.string.pause_back_to_game),
+                getString(R.string.pause_quick_save),
+                getString(R.string.pause_quick_load),
                 getString(hidden ? R.string.pause_show_controls : R.string.pause_hide_controls),
                 getString(R.string.pause_settings),
                 getString(R.string.pause_quit_game),
@@ -392,12 +396,18 @@ public class GameActivity extends SDLActivity {
                 .setItems(items, (dialog, which) -> {
                     switch (which) {
                         case 1:
-                            setTouchControlsHidden(!hidden);
+                            tapKey(KEY_F5);   // quick save
                             break;
                         case 2:
-                            showLauncher(false);
+                            tapKey(KEY_F9);   // quick load
                             break;
                         case 3:
+                            setTouchControlsHidden(!hidden);
+                            break;
+                        case 4:
+                            showLauncher(false);
+                            break;
+                        case 5:
                             showLauncher(true);
                             break;
                         default:
@@ -405,6 +415,16 @@ public class GameActivity extends SDLActivity {
                     }
                 })
                 .show();
+    }
+
+    private static final int KEY_F5 = 135;
+    private static final int KEY_F9 = 139;
+
+    /** Presses and releases a key for the engine, a moment apart so that it sees both. */
+    private void tapKey(int keyCode) {
+        SDLActivity.onNativeKeyDown(keyCode);
+        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(
+                () -> SDLActivity.onNativeKeyUp(keyCode), 120);
     }
 
     /** Shows or hides the touch controls and remembers it (the launcher shows the same choice). */

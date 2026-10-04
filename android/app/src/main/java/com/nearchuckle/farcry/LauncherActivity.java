@@ -212,7 +212,13 @@ public class LauncherActivity extends Activity {
             prefs.edit().putLong(KEY_LAST_EXIT_SEEN, latest.getTimestamp()).commit();
             if (seen == 0 || onPurpose) return;   // first run, or the player ended it
             int reason = latest.getReason();
-            if (reason == 1 || reason == 10 || reason == 11) return;   // a normal end
+            if (reason == 1) {
+                // The game ended by itself (Quit in its menu: the engine exits without telling the
+                // activity): the app closes with it instead of leaving these settings behind.
+                finishAndRemoveTask();
+                return;
+            }
+            if (reason == 10 || reason == 11) return;   // a normal end
 
             String text = "reason: " + exitReasonName(reason) + "\n"
                     + "status: " + latest.getStatus() + "\n"
