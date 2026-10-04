@@ -1296,8 +1296,6 @@ bool CSystem::Init( const SSystemInitParams &params )
 	}
 	if (ICVar* cvNV30 = m_pConsole->GetCVar("r_GL_NV30_PS20")) cvNV30->Set(1);
 	if (ICVar* cvFS = m_pConsole->GetCVar("r_Fullscreen")) cvFS->Set(1);
-	// the water's reflection draws black through GL4ES (CXGame::Update keeps it off too)
-	if (ICVar* cvWaterRefl = m_pConsole->GetCVar("r_WaterReflections")) cvWaterRefl->Set(0);
 
 	// NC_GAME_LANGUAGE: the language the launcher chose ("french", "german"...),
 	// one of the FCData/Localized/<language>.pak files. On the desktop it comes
