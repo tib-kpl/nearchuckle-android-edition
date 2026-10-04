@@ -65,6 +65,8 @@ public class LauncherActivity extends Activity {
     public static final String EXIT_EXPECTED_MARKER = "exit_expected";
     private static final String KEY_LAST_EXIT_SEEN = "last_game_exit_seen";
     public static final String KEY_VIDEO_FIT = "video_fit";
+    public static final String KEY_GFX_COMPAT = "gfx_compat";
+    public static final String KEY_NO_TEX_COMPRESSION = "no_tex_compression";
     public static final String KEY_AUTO_HIDE_PAD = "auto_hide_touch_with_gamepad";
     /** Set by the in-game settings button: show this menu instead of starting the game again. */
     public static final String EXTRA_SHOW_MENU = "show_menu";
@@ -87,6 +89,8 @@ public class LauncherActivity extends Activity {
     private Switch switchUseZink;
     private Spinner spinnerResolution;
     private Spinner spinnerVideoFit;
+    private Spinner spinnerGfxCompat;
+    private Switch switchNoTexCompression;
     private Spinner spinnerLanguage;
     /** the values behind spinnerLanguage: "auto", then the game's languages */
     private final List<String> languageValues = new ArrayList<>();
@@ -366,6 +370,8 @@ public class LauncherActivity extends Activity {
         switchUseZink = findViewById(R.id.switch_use_zink);
         spinnerResolution = findViewById(R.id.spinner_resolution);
         spinnerVideoFit = findViewById(R.id.spinner_video_fit);
+        spinnerGfxCompat = findViewById(R.id.spinner_gfx_compat);
+        switchNoTexCompression = findViewById(R.id.switch_no_tex_compression);
         spinnerLanguage = findViewById(R.id.spinner_language);
         tvFovLabel = findViewById(R.id.tv_fov_label);
         seekbarFov = findViewById(R.id.seekbar_fov);
@@ -398,6 +404,16 @@ public class LauncherActivity extends Activity {
         };
         spinnerVideoFit.setAdapter(new ArrayAdapter<>(this,
                 android.R.layout.simple_spinner_dropdown_item, videoOptions));
+
+        // Graphics compatibility (black ground, striped textures...)
+        String[] gfxOptions = new String[]{
+                getString(R.string.gfx_compat_standard),
+                getString(R.string.gfx_compat_terrain),
+                getString(R.string.gfx_compat_bump),
+                getString(R.string.gfx_compat_ps)
+        };
+        spinnerGfxCompat.setAdapter(new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_dropdown_item, gfxOptions));
     }
 
     // ---------- game language
@@ -552,6 +568,8 @@ public class LauncherActivity extends Activity {
         switchUseZink.setChecked(prefs.getBoolean(KEY_USE_ZINK, true));
         spinnerResolution.setSelection(prefs.getInt(KEY_RES_MODE, 0));
         spinnerVideoFit.setSelection(prefs.getInt(KEY_VIDEO_FIT, 0));
+        spinnerGfxCompat.setSelection(prefs.getInt(KEY_GFX_COMPAT, 0));
+        switchNoTexCompression.setChecked(prefs.getBoolean(KEY_NO_TEX_COMPRESSION, false));
         setupLanguageSpinner(path, prefs.getString(KEY_GAME_LANGUAGE, "auto"));
 
         int fov = prefs.getInt(KEY_FOV, 90);
@@ -580,6 +598,8 @@ public class LauncherActivity extends Activity {
         editor.putBoolean(KEY_USE_ZINK, switchUseZink.isChecked());
         editor.putInt(KEY_RES_MODE, spinnerResolution.getSelectedItemPosition());
         editor.putInt(KEY_VIDEO_FIT, spinnerVideoFit.getSelectedItemPosition());
+        editor.putInt(KEY_GFX_COMPAT, spinnerGfxCompat.getSelectedItemPosition());
+        editor.putBoolean(KEY_NO_TEX_COMPRESSION, switchNoTexCompression.isChecked());
         int language = spinnerLanguage.getSelectedItemPosition();
         if (language >= 0 && language < languageValues.size())
             editor.putString(KEY_GAME_LANGUAGE, languageValues.get(language));

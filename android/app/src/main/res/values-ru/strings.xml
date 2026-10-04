@@ -192,4 +192,10 @@
     <string name="btn_close_report">Закрыть</string>
     <string name="dialog_game_exit_title">Игра остановилась</string>
     <string name="dialog_game_exit_msg">Процесс игры завершился без вашей команды.\n\nПричина: %1$s\n%2$s\n\nПодробности в farcry_last_exit.txt в папке игры.</string>
+    <string name="label_gfx_compat">Совместимость графики (чёрная земля, полосатые текстуры):</string>
+    <string name="gfx_compat_standard">Стандартно</string>
+    <string name="gfx_compat_terrain">1 - Упрощённые шейдеры земли</string>
+    <string name="gfx_compat_bump">2 - 1 + без бамп-маппинга</string>
+    <string name="gfx_compat_ps">3 - 2 + без пиксельных шейдеров 2.0</string>
+    <string name="switch_no_tex_compression">Не использовать сжатые текстуры</string>
 </resources>

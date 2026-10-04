@@ -192,4 +192,10 @@
     <string name="btn_close_report">Close</string>
     <string name="dialog_game_exit_title">The game stopped</string>
     <string name="dialog_game_exit_msg">The game\'s process ended without being asked to.\n\nReason: %1$s\n%2$s\n\nThe details are in farcry_last_exit.txt, in the game folder.</string>
+    <string name="label_gfx_compat">Graphics compatibility (black ground, striped textures):</string>
+    <string name="gfx_compat_standard">Standard</string>
+    <string name="gfx_compat_terrain">1 - Simpler terrain shaders</string>
+    <string name="gfx_compat_bump">2 - 1 + no bump mapping</string>
+    <string name="gfx_compat_ps">3 - 2 + no pixel shaders 2.0</string>
+    <string name="switch_no_tex_compression">Do not use compressed textures</string>
 </resources>

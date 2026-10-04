@@ -216,6 +216,26 @@ public class GameActivity extends SDLActivity {
         args.add("\"r_GL_NV30_PS20 1\"");
         args.add("\"GL_NV30_PS20 1\"");
 
+        // Graphics compatibility, cumulative: 1 simpler terrain shaders (a black ground), 2 no bump mapping
+        // (striped or oddly coloured textures), 3 no pixel shaders 2.0. Set after the values above.
+        int compat = prefs.getInt(LauncherActivity.KEY_GFX_COMPAT, 0);
+        if (compat >= 1) {
+            args.add("\"r_ShaderTerrainDOT3 0\"");
+            args.add("\"r_ShaderTerrainSpecular 0\"");
+        }
+        if (compat >= 2) {
+            args.add("\"r_NoBumpmap 1\"");
+            args.add("\"r_Quality_BumpMapping 0\"");
+            args.add("\"r_TexNormalMapCompressed 0\"");
+        }
+        if (compat >= 3) {
+            args.add("\"r_NoPS20 1\"");
+        }
+        if (prefs.getBoolean(LauncherActivity.KEY_NO_TEX_COMPRESSION, false)) {
+            args.add("\"r_SupportCompressedTextures 0\"");
+            args.add("\"r_TexHWDXTCompression 0\"");
+        }
+
         // Custom parameters
         String customArgs = prefs.getString(LauncherActivity.KEY_CUSTOM_ARGS, "").trim();
         if (!customArgs.isEmpty()) {

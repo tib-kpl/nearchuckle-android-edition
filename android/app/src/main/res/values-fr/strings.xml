@@ -192,4 +192,10 @@
     <string name="btn_close_report">Fermer</string>
     <string name="dialog_game_exit_title">Le jeu s’est arrêté</string>
     <string name="dialog_game_exit_msg">Le processus du jeu s’est arrêté sans que vous l’ayez demandé.\n\nRaison : %1$s\n%2$s\n\nLes détails sont dans farcry_last_exit.txt, dans le dossier du jeu.</string>
+    <string name="label_gfx_compat">Compatibilité graphique (sol noir, textures rayées) :</string>
+    <string name="gfx_compat_standard">Standard</string>
+    <string name="gfx_compat_terrain">1 - Shaders du terrain simplifiés</string>
+    <string name="gfx_compat_bump">2 - 1 + sans bump mapping</string>
+    <string name="gfx_compat_ps">3 - 2 + sans pixel shaders 2.0</string>
+    <string name="switch_no_tex_compression">Ne pas utiliser les textures compressées</string>
 </resources>
