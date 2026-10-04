@@ -189,4 +189,5 @@
     <string name="act_walk">Walk</string>
     <string name="act_quicksave">Quick save</string>
     <string name="act_quickload">Quick load</string>
+    <string name="btn_close_report">Close</string>
 </resources>
