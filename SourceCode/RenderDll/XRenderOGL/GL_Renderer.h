@@ -50,6 +50,9 @@ The GLRenderer interface Class
 #include <SDL3/SDL.h>
 #endif
 #endif
+#if defined(__ANDROID__)
+#include "AndroidGLBackend.h"
+#endif
 class PBuffer;
 class CPBuffer;
 

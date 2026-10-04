@@ -129,7 +129,7 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
         sb.append("----------------------------------------------------------------\n");
         SharedPreferences prefs = context.getSharedPreferences(LauncherActivity.PREFS_NAME, Context.MODE_PRIVATE);
         String gamePath = prefs.getString(LauncherActivity.KEY_GAME_PATH, "(not set)");
-        boolean useZink = prefs.getBoolean(LauncherActivity.KEY_USE_ZINK, true);
+        boolean useZink = prefs.getBoolean(LauncherActivity.KEY_USE_ZINK, false);
         boolean devMode = prefs.getBoolean(LauncherActivity.KEY_DEVMODE, false);
         int fov = prefs.getInt(LauncherActivity.KEY_FOV, 90);
         int resMode = prefs.getInt(LauncherActivity.KEY_RES_MODE, 0);

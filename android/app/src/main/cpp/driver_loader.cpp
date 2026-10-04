@@ -4,6 +4,9 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <dlfcn.h>
+#include <cinttypes>
+#include <cstdio>
+#include <cstdlib>
 #include <sys/stat.h>
 
 #define TAG "NearChuckle-DriverLoader"
@@ -312,6 +315,10 @@ Java_com_nearchuckle_farcry_driver_DriverHook_nativeInitDriver(
 
         if (g_customVulkanHandle) {
             LOGI("adrenotools successfully loaded custom Turnip driver!");
+            // for Mesa's Zink (OSMesa reads the Vulkan library's handle from VULKAN_PTR)
+            char vulkanPtr[32];
+            snprintf(vulkanPtr, sizeof(vulkanPtr), "%" PRIxPTR, (uintptr_t)g_customVulkanHandle);
+            setenv("VULKAN_PTR", vulkanPtr, 1);
         } else {
             LOGW("adrenotools_open_libvulkan returned null, falling back to direct ICD / dlopen: %s", fullDriverPath.c_str());
             void *directHandle = dlopen(fullDriverPath.c_str(), RTLD_NOW | RTLD_GLOBAL);

@@ -223,6 +223,20 @@ static GLboolean DummyGLBool(void) { return GL_FALSE; }
 static const GLubyte* DummyGLString(GLenum) { return (const GLubyte*)""; }
 #endif
 
+#ifdef __linux
+// a function from whatever is loaded, when the OpenGL library did not give it (never with Zink:
+// that would be a function of another OpenGL)
+static void* DefaultGLSym(const char* Name)
+{
+#ifdef __ANDROID__
+  if (FCGL_IsZink())
+    return nullptr;
+#endif
+  return ::dlsym(RTLD_DEFAULT, Name);
+}
+
+#endif
+
 bool CGLRenderer::FindExt( const char* Name )
 {
   if (!Name || !Name[0])
@@ -250,7 +264,7 @@ bool CGLRenderer::FindExt( const char* Name )
     triedGetStringi = true;
     pfnGetStringi = (PFNGLGETSTRINGIPROC)SDL_GL_GetProcAddress("glGetStringi");
     if (!pfnGetStringi)
-      pfnGetStringi = (PFNGLGETSTRINGIPROC)::dlsym(RTLD_DEFAULT, "glGetStringi");
+      pfnGetStringi = (PFNGLGETSTRINGIPROC)DefaultGLSym("glGetStringi");
   }
   if (!str && pfnGetStringi && cryglGetIntegerv)
   {
@@ -301,6 +315,10 @@ static void EnsureGLHandlesLoaded()
   if (!s_handlesInited)
   {
     s_handlesInited = true;
+#ifdef __ANDROID__
+    if (FCGL_IsZink())
+      return;
+#endif
     s_glHandles[0] = dlopen("libGL.so", RTLD_NOW | RTLD_GLOBAL);
     s_glHandles[1] = dlopen("libGL.so.1", RTLD_NOW | RTLD_GLOBAL);
     s_glHandles[2] = dlopen("libGLESv3.so", RTLD_NOW | RTLD_GLOBAL);
@@ -332,7 +350,7 @@ void CGLRenderer::FindProc( void*& ProcAddress, char* Name, char* SupportName, b
     ProcAddress = (void *)(uintptr_t)SDL_GL_GetProcAddress( Name );
 #ifdef __linux
   if (!ProcAddress)
-    ProcAddress = ::dlsym(RTLD_DEFAULT, Name);
+    ProcAddress = DefaultGLSym(Name);
   if (!ProcAddress)
   {
     for (int i = 2; i < 5; ++i)
@@ -355,7 +373,7 @@ void CGLRenderer::FindProc( void*& ProcAddress, char* Name, char* SupportName, b
     ProcAddress = (void *)(uintptr_t)SDL_GL_GetProcAddress( Name );
 #ifdef __linux
     if (!ProcAddress)
-      ProcAddress = ::dlsym(RTLD_DEFAULT, Name);
+      ProcAddress = DefaultGLSym(Name);
 #endif
 #endif
   }
@@ -1713,10 +1731,14 @@ HWND CGLRenderer::SetMode(int x,int y,int width,int height,unsigned int cbpp, in
     m_width = width;
     m_height = height;
 
+#ifdef __ANDROID__
+    SDL_Window* win = FCGL_CreateWindow(szWinTitle, width, height, windowFlags);
+#else
     SDL_Window* win = SDL_CreateWindow(szWinTitle,
         width,
         height,
         windowFlags);
+#endif
 
 #ifdef __ANDROID__
     if (!win)
@@ -1733,7 +1755,7 @@ HWND CGLRenderer::SetMode(int x,int y,int width,int height,unsigned int cbpp, in
     if (!win)
     {
         // Try fullscreen with native dimensions (0, 0)
-        win = SDL_CreateWindow(szWinTitle, 0, 0, windowFlags | SDL_WINDOW_FULLSCREEN);
+        win = FCGL_CreateWindow(szWinTitle, 0, 0, windowFlags | SDL_WINDOW_FULLSCREEN);
     }
     if (win)
     {

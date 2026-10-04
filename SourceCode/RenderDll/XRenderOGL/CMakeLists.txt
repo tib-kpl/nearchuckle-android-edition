@@ -98,6 +98,7 @@ set(SRC_FILES
     "GLScreenRender.cpp"
     "GLShaders.cpp"
     "GLSystem.cpp"
+    "AndroidGLBackend.cpp"
     "GLTextures.cpp"
     "GLTexturesStreaming.cpp"
     "GL_Renderer.cpp"
@@ -186,6 +187,7 @@ elseif (ANDROID)
         log
         dl
         m
+        android
     )
 else()
     set(SYSTEM_DEPS

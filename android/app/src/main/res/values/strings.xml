@@ -21,8 +21,8 @@
 
     <!-- Graphics Section -->
     <string name="section_graphics">Graphics &amp; Renderer</string>
-    <string name="switch_use_zink">Enable Mesa Zink (OpenGL over Vulkan)</string>
-    <string name="desc_use_zink">Uses OpenGL 2.1 to Vulkan translation for high compatibility and shaders</string>
+    <string name="switch_use_zink">Mesa Zink renderer (OpenGL on Vulkan, experimental)</string>
+    <string name="desc_use_zink">Off: GL4ES (OpenGL on OpenGL ES). On: Mesa draws the game on Vulkan, with the GPU driver chosen below (system or Turnip). renderer.txt in the game folder says what was used.</string>
     <string name="label_resolution">Screen Resolution:</string>
     <string name="label_fov">Field of View (FOV): %d°</string>
     <string name="switch_devmode">Developer Mode (-DEVMODE)</string>

@@ -65,7 +65,7 @@ public class GameActivity extends SDLActivity {
 
         String defaultPath = android.os.Environment.getExternalStorageDirectory().getAbsolutePath() + "/FarCry";
         String gamePath = prefs.getString(LauncherActivity.KEY_GAME_PATH, defaultPath);
-        boolean useZink = prefs.getBoolean(LauncherActivity.KEY_USE_ZINK, true);
+        boolean useZink = prefs.getBoolean(LauncherActivity.KEY_USE_ZINK, false);
         boolean turbo = TurnipDriverManager.isTurboEnabled(context);
         DriverInfo selectedDriver = TurnipDriverManager.getSelectedDriver(context);
 
@@ -106,19 +106,22 @@ public class GameActivity extends SDLActivity {
         }
         Log.i(TAG, "Game language: " + (language != null ? language : "english (engine default)"));
 
-        // 2. Configure Mesa Zink (OpenGL over Vulkan)
+        // 2. Mesa Zink (OpenGL on Vulkan, through libOSMesa.so): the renderer reads FC_GL_BACKEND
+        // (AndroidGLBackend.cpp). Mesa reports its own OpenGL version and extensions (the ARB
+        // programs of the game are real ones there), so nothing is overridden.
         if (useZink) {
             try {
-                Os.setenv("MESA_LOADER_DRIVER_OVERRIDE", "zink", true);
+                Os.setenv("FC_GL_BACKEND", "zink", true);
                 Os.setenv("GALLIUM_DRIVER", "zink", true);
-                Os.setenv("ZINK_DESCRIPTORS", "lazy", true);
-                Os.setenv("MESA_GL_VERSION_OVERRIDE", "2.1COMPAT", true);
-                Os.setenv("MESA_GLSL_VERSION_OVERRIDE", "140", true);
-                // Allow ARB shaders for Far Cry CryEngine 1
-                Os.setenv("MESA_EXTENSION_OVERRIDE", "+GL_ARB_vertex_program +GL_ARB_fragment_program", true);
-                Log.i(TAG, "Configured Mesa Zink environment variables.");
+                Os.setenv("MESA_LOADER_DRIVER_OVERRIDE", "zink", true);
+                Log.i(TAG, "Renderer: Mesa Zink (OSMesa).");
             } catch (ErrnoException e) {
                 Log.e(TAG, "Failed setting Zink environment variables", e);
+            }
+        } else {
+            try {
+                Os.unsetenv("FC_GL_BACKEND");
+            } catch (ErrnoException ignored) {
             }
         }
 
@@ -142,11 +145,13 @@ public class GameActivity extends SDLActivity {
         } catch (Throwable t) {
             Log.w(TAG, "libc++_shared pre-load: " + t.getMessage());
         }
-        try {
-            System.loadLibrary("GL");
-            Log.i(TAG, "libGL.so (gl4es) pre-loaded successfully.");
-        } catch (Throwable t) {
-            Log.w(TAG, "libGL pre-load: " + t.getMessage());
+        if (!useZink) {   // (with Zink, the OpenGL is Mesa's: GL4ES stays out)
+            try {
+                System.loadLibrary("GL");
+                Log.i(TAG, "libGL.so (gl4es) pre-loaded successfully.");
+            } catch (Throwable t) {
+                Log.w(TAG, "libGL pre-load: " + t.getMessage());
+            }
         }
 
         // 4. Configure Turnip / Custom Vulkan driver via adrenotools

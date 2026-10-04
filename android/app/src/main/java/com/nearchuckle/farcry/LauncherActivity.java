@@ -52,7 +52,8 @@ import java.util.List;
 public class LauncherActivity extends Activity {
     public static final String PREFS_NAME = "farcry_prefs";
     public static final String KEY_GAME_PATH = "game_path";
-    public static final String KEY_USE_ZINK = "use_zink";
+    // Zink (Mesa's OpenGL on Vulkan, through OSMesa) instead of GL4ES; experimental, off by default
+    public static final String KEY_USE_ZINK = "renderer_zink";
     public static final String KEY_RES_MODE = "resolution_mode";
     public static final String KEY_FOV = "game_fov";
     public static final String KEY_DEVMODE = "devmode";
@@ -571,7 +572,7 @@ public class LauncherActivity extends Activity {
         editGamePath.setText(path);
         validateGamePath(path);
 
-        switchUseZink.setChecked(prefs.getBoolean(KEY_USE_ZINK, true));
+        switchUseZink.setChecked(prefs.getBoolean(KEY_USE_ZINK, false));
         spinnerResolution.setSelection(prefs.getInt(KEY_RES_MODE, 0));
         spinnerVideoFit.setSelection(prefs.getInt(KEY_VIDEO_FIT, 0));
         spinnerGfxCompat.setSelection(prefs.getInt(KEY_GFX_COMPAT, 0));

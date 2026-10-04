@@ -284,6 +284,20 @@ if [ -f "$DEPS_PREFIX/lib/libGL.so" ]; then
     cp -f "$DEPS_PREFIX/lib/libGL.so" "$JNI_LIBS_DIR/libGL.so"
 fi
 
+# Mesa's Zink through OSMesa (the launcher's "Mesa Zink" renderer, see AndroidGLBackend.cpp): the
+# arm64 libOSMesa.so of PojavLauncher (Mesa 23.0.4 with Zink, MIT license), pinned and checked
+if [ "$ABI" = "arm64-v8a" ]; then
+    OSMESA_URL="https://raw.githubusercontent.com/PojavLauncherTeam/PojavLauncher/98947f23d338012c5869dc13de31cb39dadba333/app_pojavlauncher/src/main/jniLibs/arm64-v8a/libOSMesa.so"
+    OSMESA_SHA256="d6e96eb4bbbfbdcdf79a77ba72e018d8a93ccf4643d5c1591265f2b162ad3160"
+    OSMESA_CACHE="$SRC_CACHE/libOSMesa-$OSMESA_SHA256.so"
+    if [ ! -f "$OSMESA_CACHE" ]; then
+        curl -fsSL "$OSMESA_URL" -o "$OSMESA_CACHE.part"
+        mv "$OSMESA_CACHE.part" "$OSMESA_CACHE"
+    fi
+    echo "$OSMESA_SHA256  $OSMESA_CACHE" | sha256sum -c -
+    cp -f "$OSMESA_CACHE" "$JNI_LIBS_DIR/libOSMesa.so"
+fi
+
 # Verify critical libraries exist
 if [ ! -f "$JNI_LIBS_DIR/libc++_shared.so" ]; then
     echo "ERROR: libc++_shared.so is missing from $JNI_LIBS_DIR!"
