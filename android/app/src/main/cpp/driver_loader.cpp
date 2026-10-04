@@ -28,6 +28,66 @@ static struct sigaction g_old_sigbus;
 static struct sigaction g_old_sigfpe;
 static struct sigaction g_old_sigill;
 
+#include <unwind.h>
+#include <stdlib.h>
+#include <string.h>
+
+struct CrashBacktrace {
+    void *frames[64];
+    int count;
+};
+
+static _Unwind_Reason_Code crashUnwindCallback(struct _Unwind_Context *context, void *arg) {
+    auto *bt = (CrashBacktrace *)arg;
+    uintptr_t pc = _Unwind_GetIP(context);
+    if (pc) {
+        if (bt->count >= 64) return _URC_END_OF_STACK;
+        bt->frames[bt->count++] = (void *)pc;
+    }
+    return _URC_NO_REASON;
+}
+
+/** The lines of /proc/<file> that start with one of the given names (memory figures). */
+static void crashCopyProcLines(FILE *fp, const char *file, const char *const *names, int nameCount) {
+    FILE *in = fopen(file, "r");
+    if (!in) return;
+    char line[256];
+    while (fgets(line, sizeof(line), in)) {
+        for (int i = 0; i < nameCount; i++) {
+            if (strncmp(line, names[i], strlen(names[i])) == 0) {
+                fputs(line, fp);
+                break;
+            }
+        }
+    }
+    fclose(in);
+}
+
+/** The memory the process and the device have, and where the crash happened (a stack of calls). */
+static void crashWriteDetails(FILE *fp) {
+    static const char *const processNames[] = {"VmPeak", "VmSize", "VmRSS", "VmSwap", "Threads"};
+    static const char *const deviceNames[] = {"MemTotal", "MemFree", "MemAvailable"};
+    fprintf(fp, "Process memory:\n");
+    crashCopyProcLines(fp, "/proc/self/status", processNames, 5);
+    fprintf(fp, "Device memory:\n");
+    crashCopyProcLines(fp, "/proc/meminfo", deviceNames, 3);
+
+    CrashBacktrace bt{};
+    _Unwind_Backtrace(crashUnwindCallback, &bt);
+    fprintf(fp, "Stack (%d frames):\n", bt.count);
+    for (int i = 0; i < bt.count; i++) {
+        Dl_info info{};
+        uintptr_t pc = (uintptr_t)bt.frames[i];
+        if (dladdr((void *)pc, &info) && info.dli_fname) {
+            fprintf(fp, "  #%02d pc 0x%lx  %s (%s+0x%lx)\n", i, info.dli_fbase ? (unsigned long)(pc - (uintptr_t)info.dli_fbase) : (unsigned long)pc,
+                    info.dli_fname, info.dli_sname ? info.dli_sname : "?",
+                    info.dli_saddr ? (unsigned long)(pc - (uintptr_t)info.dli_saddr) : 0UL);
+        } else {
+            fprintf(fp, "  #%02d pc 0x%lx\n", i, (unsigned long)pc);
+        }
+    }
+}
+
 static void nativeCrashSignalHandler(int sig, siginfo_t *info, void *ucontext) {
     const char *sigName = "UNKNOWN";
     if (sig == SIGSEGV) sigName = "SIGSEGV (Segmentation violation)";
@@ -106,6 +166,38 @@ static void nativeCrashSignalHandler(int sig, siginfo_t *info, void *ucontext) {
             fprintf(fp, "================================================================\n\n");
             fclose(fp);
             break;
+        }
+    }
+
+    // The details (memory, stack) and a copy of the whole report in the game folder, where it can be
+    // picked up from a computer: farcry_crash_report.txt.
+    {
+        const char *gameDir = getenv("FARCRY_DATA_DIR");
+        char copyPath[1100] = {0};
+        if (gameDir && *gameDir) snprintf(copyPath, sizeof(copyPath), "%s/farcry_crash_report.txt", gameDir);
+        for (const char *path : paths) {
+            FILE *fp = fopen(path, "a");
+            if (fp) {
+                crashWriteDetails(fp);
+                fclose(fp);
+                break;
+            }
+        }
+        if (copyPath[0]) {
+            FILE *fp = fopen(copyPath, "w");
+            if (fp) {
+                fprintf(fp, "FAR CRY ANDROID NATIVE CRASH\nSignal:        %d (%s)\nFault Address: %p\n", sig, sigName, info ? info->si_addr : nullptr);
+                if (pc) fprintf(fp, "PC (IP):       0x%lx (%s + 0x%lx, %s)\n", (unsigned long)pc,
+                                pc_info.dli_fname ? pc_info.dli_fname : "(unknown)",
+                                pc_info.dli_fbase ? (unsigned long)(pc - (uintptr_t)pc_info.dli_fbase) : 0UL,
+                                pc_info.dli_sname ? pc_info.dli_sname : "(no symbol)");
+                if (lr) fprintf(fp, "LR (Return):   0x%lx (%s + 0x%lx, %s)\n", (unsigned long)lr,
+                                lr_info.dli_fname ? lr_info.dli_fname : "(unknown)",
+                                lr_info.dli_fbase ? (unsigned long)(lr - (uintptr_t)lr_info.dli_fbase) : 0UL,
+                                lr_info.dli_sname ? lr_info.dli_sname : "(no symbol)");
+                crashWriteDetails(fp);
+                fclose(fp);
+            }
         }
     }
 
