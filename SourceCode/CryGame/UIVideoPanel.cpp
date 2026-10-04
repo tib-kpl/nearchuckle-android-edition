@@ -201,12 +201,12 @@ int CUIVideoPanel::Draw(int iPass)
 
 		// How the video fills the panel: the launcher's choice (FC_VIDEO_FIT: 0 automatic, 1 original
 		// ratio, 2 fill and crop, 3 stretch). Automatic: a looping video (the menu's background)
-		// fills the screen, the others (intros, cutscenes) keep their own ratio.
+		// fills the screen cropped, the others (intros) are stretched to it.
 		int fit = 0;
 		if (const char *pFit = getenv("FC_VIDEO_FIT"))
 			fit = atoi(pFit);
 		if (fit <= 0 || fit > 3)
-			fit = m_bLooping ? 2 : (m_bKeepAspect ? 1 : 3);
+			fit = m_bLooping ? 2 : 3;
 		else if (fit == 1)
 			fit = m_bKeepAspect ? 1 : 3;
 		const bool bCover = (fit == 2);

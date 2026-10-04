@@ -150,7 +150,7 @@
     <string name="pause_settings">Настройки (игра на паузе)</string>
     <string name="pause_quit_game">Выйти из игры</string>
     <string name="label_video_fit">Видео на экране:</string>
-    <string name="video_fit_auto">Авто (фон меню на весь экран)</string>
+    <string name="video_fit_auto">Авто (фон обрезается, остальные растягиваются)</string>
     <string name="video_fit_original">Исходные пропорции (чёрные полосы)</string>
     <string name="video_fit_fill">На весь экран (с обрезкой)</string>
     <string name="video_fit_stretch">Растянуть на экран</string>

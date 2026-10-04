@@ -29,8 +29,9 @@ import java.util.Set;
  * The left stick moves (W A S D), the right stick looks (relative mouse), with the sensitivity, dead
  * zone and inversion of {@link GamepadSettingsActivity}.
  *
- * In a menu (the engine says so, see {@link #menuUp()}): A clicks, B is Esc, the D-Pad and the left
- * stick are the arrow keys; the right stick still moves the cursor.
+ * In a menu (the engine says so, see {@link #menuUp()}): A is Enter, B is Esc, up and down (D-Pad and
+ * left stick) are Shift+Tab and Tab, which move the menus' focus, left and right are the arrows; the
+ * right stick still moves the cursor and the triggers click.
  *
  * The mapper only reacts to events whose source is a gamepad / joystick / D-Pad, so hardware
  * keyboards and mice are completely unaffected.
@@ -53,7 +54,6 @@ public final class GamepadMapper {
     // Current injected state, so keys are never sent twice or left pressed.
     private final Set<Integer> heldKeys = new HashSet<>();
     private boolean moveUp, moveDown, moveLeft, moveRight;
-    private boolean leftDown, rightDown;
     private boolean triggerL, triggerR;
     private float lookRemainderX, lookRemainderY;
 
@@ -148,8 +148,17 @@ public final class GamepadMapper {
     /** What a button does now: a key code, a TARGET_MOUSE_* value, or 0 for nothing. */
     private int resolve(int code) {
         if (menuUp()) {
-            if (code == KeyEvent.KEYCODE_BUTTON_A) return ACTION_CLICK;                 // choose
-            if (code == KeyEvent.KEYCODE_BUTTON_B) return KeyEvent.KEYCODE_ESCAPE;      // back
+            // The menus move their focus with Tab / Shift+Tab, press the focused button with Enter
+            // and take the arrows for lists and choices.
+            switch (code) {
+                case KeyEvent.KEYCODE_BUTTON_A:   return KeyEvent.KEYCODE_ENTER;           // choose
+                case KeyEvent.KEYCODE_BUTTON_B:   return KeyEvent.KEYCODE_ESCAPE;          // back
+                case KeyEvent.KEYCODE_DPAD_UP:    return KEY_SHIFT_TAB;
+                case KeyEvent.KEYCODE_DPAD_DOWN:  return KeyEvent.KEYCODE_TAB;
+                case KeyEvent.KEYCODE_DPAD_LEFT:  return KeyEvent.KEYCODE_DPAD_LEFT;
+                case KeyEvent.KEYCODE_DPAD_RIGHT: return KeyEvent.KEYCODE_DPAD_RIGHT;
+                default: break;
+            }
         }
         GamepadBindings.Action bound = bindings.get(code);
         if (bound != null) {
@@ -190,8 +199,8 @@ public final class GamepadMapper {
         float lx = event.getAxisValue(MotionEvent.AXIS_X);
         float ly = event.getAxisValue(MotionEvent.AXIS_Y);
         boolean inMenu = menuUp();
-        int upKey = inMenu ? KeyEvent.KEYCODE_DPAD_UP : KeyEvent.KEYCODE_W;
-        int downKey = inMenu ? KeyEvent.KEYCODE_DPAD_DOWN : KeyEvent.KEYCODE_S;
+        int upKey = inMenu ? KEY_SHIFT_TAB : KeyEvent.KEYCODE_W;
+        int downKey = inMenu ? KeyEvent.KEYCODE_TAB : KeyEvent.KEYCODE_S;
         int leftKey = inMenu ? KeyEvent.KEYCODE_DPAD_LEFT : KeyEvent.KEYCODE_A;
         int rightKey = inMenu ? KeyEvent.KEYCODE_DPAD_RIGHT : KeyEvent.KEYCODE_D;
         float move = Math.max(deadzone, 0.25f);
@@ -269,40 +278,47 @@ public final class GamepadMapper {
     // Injected state helpers
     // -----------------------------------------------------------------------------------------
 
+    /** The menus' "previous": Shift+Tab, pressed and released as one key. */
+    private static final int KEY_SHIFT_TAB = -3;
+
     private void pressKey(int keyCode) {
         if (heldKeys.add(keyCode)) {
-            SDLActivity.onNativeKeyDown(keyCode);
+            if (keyCode == KEY_SHIFT_TAB) {
+                SDLActivity.onNativeKeyDown(KeyEvent.KEYCODE_SHIFT_LEFT);
+                SDLActivity.onNativeKeyDown(KeyEvent.KEYCODE_TAB);
+            } else {
+                SDLActivity.onNativeKeyDown(keyCode);
+            }
         }
     }
 
     private void releaseKey(int keyCode) {
         if (heldKeys.remove(keyCode)) {
-            SDLActivity.onNativeKeyUp(keyCode);
+            if (keyCode == KEY_SHIFT_TAB) {
+                SDLActivity.onNativeKeyUp(KeyEvent.KEYCODE_TAB);
+                SDLActivity.onNativeKeyUp(KeyEvent.KEYCODE_SHIFT_LEFT);
+            } else {
+                SDLActivity.onNativeKeyUp(keyCode);
+            }
         }
     }
 
-    // Mouse button injection (the same way OscButton does it).
+    // Mouse button injection. SDL takes the state of all the mouse buttons held: a button going down
+    // sends the new state, a button going up sends what is still held (0 when none): sending the
+    // released button itself, as this did, left it pressed for SDL.
+    private int mouseState;
+
     private void pressMouse(int button) {
-        if (button == MotionEvent.BUTTON_PRIMARY) {
-            if (!leftDown) {
-                leftDown = true;
-                SDLActivity.onNativeMouse(button, MotionEvent.ACTION_DOWN, 0, 0, false);
-            }
-        } else if (!rightDown) {
-            rightDown = true;
-            SDLActivity.onNativeMouse(button, MotionEvent.ACTION_DOWN, 0, 0, false);
+        if ((mouseState & button) == 0) {
+            mouseState |= button;
+            SDLActivity.onNativeMouse(mouseState, MotionEvent.ACTION_DOWN, 0, 0, false);
         }
     }
 
     private void releaseMouse(int button) {
-        if (button == MotionEvent.BUTTON_PRIMARY) {
-            if (leftDown) {
-                leftDown = false;
-                SDLActivity.onNativeMouse(button, MotionEvent.ACTION_UP, 0, 0, false);
-            }
-        } else if (rightDown) {
-            rightDown = false;
-            SDLActivity.onNativeMouse(button, MotionEvent.ACTION_UP, 0, 0, false);
+        if ((mouseState & button) != 0) {
+            mouseState &= ~button;
+            SDLActivity.onNativeMouse(mouseState, MotionEvent.ACTION_UP, 0, 0, false);
         }
     }
 

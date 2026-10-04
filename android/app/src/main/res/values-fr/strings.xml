@@ -150,7 +150,7 @@
     <string name="pause_settings">Paramètres (le jeu reste en pause)</string>
     <string name="pause_quit_game">Quitter le jeu</string>
     <string name="label_video_fit">Vidéos à l\'écran :</string>
-    <string name="video_fit_auto">Automatique (le fond du menu remplit l\'écran)</string>
+    <string name="video_fit_auto">Automatique (fond rogné, autres vidéos étirées)</string>
     <string name="video_fit_original">Format d\'origine (bandes noires)</string>
     <string name="video_fit_fill">Remplir l\'écran (bords rognés)</string>
     <string name="video_fit_stretch">Étirer à l\'écran</string>

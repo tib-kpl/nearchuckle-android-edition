@@ -95,6 +95,8 @@ public class LauncherActivity extends Activity {
     private Switch switchAutoLaunch;
     private Switch switchAutoHidePad;
     private Button btnResumeGame;
+    /** Floating, top right (where the game's gear is): back to the game that is still running. */
+    private Button btnBackToGame;
 
     private List<DriverInfo> installedDrivers = new ArrayList<>();
     private ArrayAdapter<String> driverAdapter;
@@ -111,6 +113,7 @@ public class LauncherActivity extends Activity {
         CrashHandler.init(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_launcher);
+        addBackToGameButton();
 
         requestStoragePermissions();
 
@@ -162,7 +165,28 @@ public class LauncherActivity extends Activity {
     }
 
     private void updateResumeButton() {
-        btnResumeGame.setVisibility(gameProcessPid() > 0 ? View.VISIBLE : View.GONE);
+        int visibility = gameProcessPid() > 0 ? View.VISIBLE : View.GONE;
+        btnResumeGame.setVisibility(visibility);
+        if (btnBackToGame != null) {
+            btnBackToGame.setVisibility(visibility);
+        }
+    }
+
+    private void addBackToGameButton() {
+        float density = getResources().getDisplayMetrics().density;
+        btnBackToGame = new Button(this);
+        btnBackToGame.setText(R.string.pause_back_to_game);
+        btnBackToGame.setAllCaps(false);
+        btnBackToGame.setTextColor(0xFF000000);
+        btnBackToGame.setBackgroundResource(R.drawable.btn_accent);
+        btnBackToGame.setVisibility(View.GONE);
+        btnBackToGame.setOnClickListener(v -> resumeGame());
+        android.widget.FrameLayout.LayoutParams params = new android.widget.FrameLayout.LayoutParams(
+                android.view.ViewGroup.LayoutParams.WRAP_CONTENT, Math.round(44 * density),
+                android.view.Gravity.TOP | android.view.Gravity.END);
+        params.topMargin = Math.round(8 * density);
+        params.rightMargin = Math.round(8 * density);
+        addContentView(btnBackToGame, params);
     }
 
     /** Brings the game that is still running (paused behind the launcher) back to the front. */
