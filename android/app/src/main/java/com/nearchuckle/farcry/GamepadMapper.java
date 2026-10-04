@@ -15,6 +15,7 @@ import android.os.Looper;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -107,13 +108,15 @@ public final class GamepadMapper {
         }
     }
 
-    private void requestMenuBack() {
+    /** Asks the engine to move in a menu: one character appended to ".gamepad_menu_cmd" in the game folder. */
+    private void sendMenuCommand(char command) {
         try {
             SharedPreferences prefs = context.getSharedPreferences(LauncherActivity.PREFS_NAME, Context.MODE_PRIVATE);
-            //noinspection ResultOfMethodCallIgnored
-            new File(prefs.getString(LauncherActivity.KEY_GAME_PATH, ""), ".gamepad_menu_back").createNewFile();
+            try (FileOutputStream out = new FileOutputStream(new File(prefs.getString(LauncherActivity.KEY_GAME_PATH, ""), ".gamepad_menu_cmd"), true)) {
+                out.write(command);
+            }
         } catch (Exception e) {
-            Log.w(TAG, "could not ask the menu to go back", e);
+            Log.w(TAG, "could not send a command to the menu", e);
         }
     }
 
@@ -166,8 +169,8 @@ public final class GamepadMapper {
             switch (code) {
                 case KeyEvent.KEYCODE_BUTTON_A:   return KeyEvent.KEYCODE_ENTER;           // choose
                 case KeyEvent.KEYCODE_BUTTON_B:   return MENU_BACK;                        // back
-                case KeyEvent.KEYCODE_DPAD_UP:    return KEY_SHIFT_TAB;
-                case KeyEvent.KEYCODE_DPAD_DOWN:  return KeyEvent.KEYCODE_TAB;
+                case KeyEvent.KEYCODE_DPAD_UP:    return MENU_PREV;
+                case KeyEvent.KEYCODE_DPAD_DOWN:  return MENU_NEXT;
                 case KeyEvent.KEYCODE_DPAD_LEFT:  return KeyEvent.KEYCODE_DPAD_LEFT;
                 case KeyEvent.KEYCODE_DPAD_RIGHT: return KeyEvent.KEYCODE_DPAD_RIGHT;
                 default: break;
@@ -187,9 +190,9 @@ public final class GamepadMapper {
     }
 
     private void apply(int target, boolean down) {
-        if (target == MENU_BACK) {
+        if (target == MENU_BACK || target == MENU_PREV || target == MENU_NEXT) {
             if (down) {
-                requestMenuBack();
+                sendMenuCommand(target == MENU_BACK ? 'b' : target == MENU_PREV ? 'p' : 'n');
             }
             return;
         }
@@ -218,8 +221,8 @@ public final class GamepadMapper {
         float lx = event.getAxisValue(MotionEvent.AXIS_X);
         float ly = event.getAxisValue(MotionEvent.AXIS_Y);
         boolean inMenu = menuUp();
-        int upKey = inMenu ? KEY_SHIFT_TAB : KeyEvent.KEYCODE_W;
-        int downKey = inMenu ? KeyEvent.KEYCODE_TAB : KeyEvent.KEYCODE_S;
+        int upKey = inMenu ? MENU_PREV : KeyEvent.KEYCODE_W;
+        int downKey = inMenu ? MENU_NEXT : KeyEvent.KEYCODE_S;
         int leftKey = inMenu ? KeyEvent.KEYCODE_DPAD_LEFT : KeyEvent.KEYCODE_A;
         int rightKey = inMenu ? KeyEvent.KEYCODE_DPAD_RIGHT : KeyEvent.KEYCODE_D;
         float move = Math.max(deadzone, 0.25f);
@@ -286,8 +289,12 @@ public final class GamepadMapper {
 
     private boolean stickKey(int keyCode, boolean want, boolean current) {
         if (want && !current) {
-            pressKey(keyCode);
-        } else if (!want && current) {
+            if (keyCode < 0) {
+                apply(keyCode, true);   // a menu command: sent once per push
+            } else {
+                pressKey(keyCode);
+            }
+        } else if (!want && current && keyCode >= 0) {
             releaseKey(keyCode);
         }
         return want;
@@ -301,6 +308,9 @@ public final class GamepadMapper {
     private static final int KEY_SHIFT_TAB = -3;
     /** B in a menu: asks the engine to go back one page (see CXGame::Update, ".gamepad_menu_back"). */
     private static final int MENU_BACK = -4;
+    /** Up and down in a menu: the engine moves the menus' focus (see CXGame::Update). */
+    private static final int MENU_PREV = -5;
+    private static final int MENU_NEXT = -6;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private static final long SHIFT_TAB_GAP_MS = 60;
 

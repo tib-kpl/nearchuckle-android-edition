@@ -804,28 +804,48 @@ bool CXGame::Update()
 	{
 		// Tells the Java gamepad mapper whether a menu is up (A clicks there, jumps in game): a one
 		// character file in the game folder, rewritten when the state changes.
-		// B on the pad asks to go back: the Java mapper creates ".gamepad_menu_back" in the game
-		// folder. From a menu page that is the "Main menu" button (GotoPage); from the main page it is
-		// what Esc is (back to the game, if one is running).
+		// Commands from the Java gamepad mapper, one character each, appended to
+		// ".gamepad_menu_cmd" in the game folder: 'n' next / 'p' previous choice (the menus' tab
+		// stops, as Tab and Shift+Tab), 'b' back. Back from a menu page is the "Main menu" button
+		// (GotoPage); from the main page it is what Esc is (back to the game, if one is running).
 		if (m_bMenuOverlay)
 		{
-			static float s_lastBackPoll = 0.0f;
+			static float s_lastCmdPoll = 0.0f;
 			float fNow = m_pSystem->GetITimer()->GetAsyncCurTime();
-			if (fNow - s_lastBackPoll > 0.08f)
+			if (fNow - s_lastCmdPoll > 0.03f)
 			{
-				s_lastBackPoll = fNow;
-				const char *pBackDir = getenv("FARCRY_DATA_DIR");
-				char szBackPath[1100];
-				snprintf(szBackPath, sizeof(szBackPath), "%s/.gamepad_menu_back", (pBackDir && *pBackDir) ? pBackDir : ".");
-				if (FILE *pBack = fopen(szBackPath, "rb"))
+				s_lastCmdPoll = fNow;
+				const char *pCmdDir = getenv("FARCRY_DATA_DIR");
+				char szCmd[1100], szBusy[1120];
+				snprintf(szCmd, sizeof(szCmd), "%s/.gamepad_menu_cmd", (pCmdDir && *pCmdDir) ? pCmdDir : ".");
+				snprintf(szBusy, sizeof(szBusy), "%s.busy", szCmd);
+				if (rename(szCmd, szBusy) == 0)
 				{
-					fclose(pBack);
-					remove(szBackPath);
-					const char *szLua =
-						"if UI and GotoPage then "
-						"if UI:IsScreenActive(\"MainScreen\") or UI:IsScreenActive(\"MainScreenInGame\") then "
-						"Game:SendMessage(\"Switch\") else GotoPage(\"$MainScreen$\", 0) end end";
-					m_pSystem->GetIScriptSystem()->ExecuteBuffer(szLua, strlen(szLua));
+					if (FILE *pCmd = fopen(szBusy, "rb"))
+					{
+						int c;
+						while ((c = fgetc(pCmd)) != EOF)
+						{
+							if (c == 'n' && m_pUISystem)
+							{
+								m_pUISystem->NextTabStop();
+							}
+							else if (c == 'p' && m_pUISystem)
+							{
+								m_pUISystem->PrevTabStop();
+							}
+							else if (c == 'b')
+							{
+								const char *szLua =
+									"if UI and GotoPage then "
+									"if UI:IsScreenActive(\"MainScreen\") or UI:IsScreenActive(\"MainScreenInGame\") then "
+									"Game:SendMessage(\"Switch\") else GotoPage(\"$MainScreen$\", 0) end end";
+								m_pSystem->GetIScriptSystem()->ExecuteBuffer(szLua, strlen(szLua));
+							}
+						}
+						fclose(pCmd);
+					}
+					remove(szBusy);
 				}
 			}
 		}
