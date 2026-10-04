@@ -158,7 +158,7 @@
     <string name="pad_title">Gamepad</string>
     <string name="pad_sensitivity">Camera stick speed: %.1f</string>
     <string name="pad_deadzone">Camera stick dead zone: %.2f</string>
-    <string name="pad_invert_y">Invert the camera's vertical axis</string>
+    <string name="pad_invert_y">Invert the vertical axis of the camera</string>
     <string name="pad_buttons">Buttons</string>
     <string name="pad_buttons_help">Tap an action, then press the button of your gamepad. The D-pad is the arrow keys unless you give it an action.</string>
     <string name="pad_reset">Reset the buttons</string>
