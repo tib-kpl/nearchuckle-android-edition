@@ -276,6 +276,18 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
             try (FileOutputStream fos = new FileOutputStream(crashFile)) {
                 fos.write(report.getBytes(java.nio.charset.StandardCharsets.UTF_8));
             }
+            // A copy in the game folder, where it can be picked up from a computer (the app's own
+            // folder is private): farcry_crash_report.txt next to the engine's log.txt.
+            try {
+                String gamePath = context.getSharedPreferences(LauncherActivity.PREFS_NAME, Context.MODE_PRIVATE)
+                        .getString(LauncherActivity.KEY_GAME_PATH, "");
+                if (!gamePath.isEmpty() && new File(gamePath).isDirectory()) {
+                    try (FileOutputStream copy = new FileOutputStream(new File(gamePath, "farcry_crash_report.txt"))) {
+                        copy.write(report.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                    }
+                }
+            } catch (Exception ignored) {
+            }
             // A marker file too: the game and the launcher are different processes, which do not see
             // each other's SharedPreferences changes while they run.
             new File(context.getFilesDir(), UNREAD_MARKER).createNewFile();
