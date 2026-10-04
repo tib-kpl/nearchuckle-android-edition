@@ -7,8 +7,40 @@
 #include <AL/al.h>
 #include <AL/alc.h>
 #include <cstdio>
+#include <cstdlib>
+#include <chrono>
+#include <string>
 #include <vector>
 #include "stb_vorbis.c"
+
+// Timing of the slow calls of this sound layer, appended to "sound_timing.txt" in the game folder:
+// each call that takes 20 ms or more, with the time since the first one, to find what delays the
+// sound at start.
+struct ALScopedTimer
+{
+	const char *op;
+	std::string name;
+	std::chrono::steady_clock::time_point t0;
+
+	ALScopedTimer(const char *o, const char *n) : op(o), name(n ? n : ""), t0(std::chrono::steady_clock::now()) {}
+
+	~ALScopedTimer()
+	{
+		static std::chrono::steady_clock::time_point s_first = t0;
+		auto now = std::chrono::steady_clock::now();
+		double ms = std::chrono::duration<double, std::milli>(now - t0).count();
+		if (ms < 20.0)
+			return;
+		const char *dir = getenv("FARCRY_DATA_DIR");
+		std::string path = std::string((dir && *dir) ? dir : ".") + "/sound_timing.txt";
+		if (FILE *f = fopen(path.c_str(), "a"))
+		{
+			double since = std::chrono::duration<double, std::milli>(t0 - s_first).count();
+			fprintf(f, "t=%8.0f ms  %-16s %8.1f ms  %.120s\n", since, op, ms, name.c_str());
+			fclose(f);
+		}
+	}
+};
 
 #define MAX_SOUND_FILENAME 128
 #define MIN_QUEUED_BUFFERS 20
@@ -136,6 +168,7 @@ int audio_next_available_source(void)
 
 DLL_API signed char     F_API CS_Init(int mixrate, int maxsoftwarechannels, unsigned int flags)
 {
+	ALScopedTimer timing("CS_Init", "");
 	aldevice = alcOpenDevice(0);
 	alcontext = alcCreateContext(aldevice, 0);
 	alcMakeContextCurrent(alcontext);
@@ -366,6 +399,7 @@ DLL_API CS_SAMPLE* F_API CS_Sample_Load(int index, const char* name_or_data, uns
 DLL_API CS_SAMPLE * F_API CS_Sample_Load(int index, const char *name_or_data, unsigned int mode, int offset, int length)
 #endif
 {
+	ALScopedTimer timing("CS_Sample_Load", name_or_data);
 #ifndef LINUX64
 	int length = memlength;
 #endif
@@ -594,6 +628,7 @@ signed char StreamOGGCallback(CS_STREAM* pStream, void* pBuffer, int nLength, in
 
 DLL_API CS_STREAM*    F_API CS_Stream_Open(const char *name_or_data, unsigned int mode, int offset, int length)
 {
+	ALScopedTimer timing("CS_Stream_Open", name_or_data);
 	if (!name_or_data)
 		return NULL;
 

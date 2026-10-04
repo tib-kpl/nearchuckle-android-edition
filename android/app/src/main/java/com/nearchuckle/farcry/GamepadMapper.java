@@ -129,6 +129,22 @@ public final class GamepadMapper {
         if (!isGamepadSource(event.getSource())) {
             return false;
         }
+        // The system's keys are not the game's: on a handheld the volume buttons arrive as keys of
+        // the built-in pad, and swallowing them left the volume impossible to change in the game.
+        switch (event.getKeyCode()) {
+            case KeyEvent.KEYCODE_VOLUME_UP:
+            case KeyEvent.KEYCODE_VOLUME_DOWN:
+            case KeyEvent.KEYCODE_VOLUME_MUTE:
+            case KeyEvent.KEYCODE_POWER:
+            case KeyEvent.KEYCODE_HOME:
+            case KeyEvent.KEYCODE_APP_SWITCH:
+            case KeyEvent.KEYCODE_CAMERA:
+            case KeyEvent.KEYCODE_BRIGHTNESS_DOWN:
+            case KeyEvent.KEYCODE_BRIGHTNESS_UP:
+                return false;
+            default:
+                break;
+        }
         final int action = event.getAction();
         if (action != KeyEvent.ACTION_DOWN && action != KeyEvent.ACTION_UP) {
             return true; // long-press etc. - swallow for pads
