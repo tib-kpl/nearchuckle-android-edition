@@ -59,6 +59,8 @@ public class LauncherActivity extends Activity {
     public static final String KEY_CUSTOM_ARGS = "custom_args";
     public static final String KEY_HIDE_CONTROLS = "hide_controls";
     public static final String KEY_AUTO_LAUNCH = "auto_launch";
+    /** Written by the game when it ends by itself: the launcher then closes the app. */
+    public static final String QUIT_APP_MARKER = "quit_app";
     public static final String KEY_VIDEO_FIT = "video_fit";
     public static final String KEY_AUTO_HIDE_PAD = "auto_hide_touch_with_gamepad";
     /** Set by the in-game settings button: show this menu instead of starting the game again. */
@@ -199,6 +201,13 @@ public class LauncherActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        File quitMarker = new File(getFilesDir(), QUIT_APP_MARKER);
+        if (quitMarker.exists()) {
+            //noinspection ResultOfMethodCallIgnored
+            quitMarker.delete();
+            finishAndRemoveTask();
+            return;
+        }
         updateResumeButton();
         // the game may have shown or hidden the touch controls
         switchHideControls.setChecked(TouchControls.isHidden(this));

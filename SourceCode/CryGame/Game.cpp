@@ -804,6 +804,31 @@ bool CXGame::Update()
 	{
 		// Tells the Java gamepad mapper whether a menu is up (A clicks there, jumps in game): a one
 		// character file in the game folder, rewritten when the state changes.
+		// B on the pad asks to go back: the Java mapper creates ".gamepad_menu_back" in the game
+		// folder. From a menu page that is the "Main menu" button (GotoPage); from the main page it is
+		// what Esc is (back to the game, if one is running).
+		if (m_bMenuOverlay)
+		{
+			static float s_lastBackPoll = 0.0f;
+			float fNow = m_pSystem->GetITimer()->GetAsyncCurTime();
+			if (fNow - s_lastBackPoll > 0.08f)
+			{
+				s_lastBackPoll = fNow;
+				const char *pBackDir = getenv("FARCRY_DATA_DIR");
+				char szBackPath[1100];
+				snprintf(szBackPath, sizeof(szBackPath), "%s/.gamepad_menu_back", (pBackDir && *pBackDir) ? pBackDir : ".");
+				if (FILE *pBack = fopen(szBackPath, "rb"))
+				{
+					fclose(pBack);
+					remove(szBackPath);
+					const char *szLua =
+						"if UI and GotoPage then "
+						"if UI:IsScreenActive(\"MainScreen\") or UI:IsScreenActive(\"MainScreenInGame\") then "
+						"Game:SendMessage(\"Switch\") else GotoPage(\"$MainScreen$\", 0) end end";
+					m_pSystem->GetIScriptSystem()->ExecuteBuffer(szLua, strlen(szLua));
+				}
+			}
+		}
 		static int s_lastMenuState = -1;
 		int nowMenu = m_bMenuOverlay ? 1 : 0;
 		if (nowMenu != s_lastMenuState)

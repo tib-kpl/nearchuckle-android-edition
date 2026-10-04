@@ -44,6 +44,8 @@ public class GameActivity extends SDLActivity {
     private static final String TAG = "NearChuckle-GameActivity";
     private OscManager oscManager;
     private RelativeLayout oscContainer;
+    /** The player chose "Settings" or "Quit the game" in the gear menu: the launcher stays. */
+    private boolean backToLauncher;
     /** Hardware gamepad -> WASD / mouse look / mouse buttons (see GamepadMapper). */
     private GamepadMapper gamepadMapper;
 
@@ -406,6 +408,7 @@ public class GameActivity extends SDLActivity {
      * offers to resume it) unless {@code quit} asks to end it.
      */
     private void showLauncher(boolean quit) {
+        backToLauncher = true;
         Intent intent = new Intent(this, LauncherActivity.class);
         intent.putExtra(LauncherActivity.EXTRA_SHOW_MENU, true);
         intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -480,6 +483,14 @@ public class GameActivity extends SDLActivity {
             String gamePath = prefs.getString(LauncherActivity.KEY_GAME_PATH, "");
             LauncherActivity.cleanSystemConfigFiles(gamePath);
         } catch (Throwable ignored) {}
+        // The game ended on its own (Quit in the game's menu): the whole app closes with it, instead of
+        // leaving the launcher's settings behind. The launcher sees this marker when it comes back.
+        if (!backToLauncher) {
+            try {
+                //noinspection ResultOfMethodCallIgnored
+                new File(getFilesDir(), LauncherActivity.QUIT_APP_MARKER).createNewFile();
+            } catch (Throwable ignored) {}
+        }
         // Ensure clean exit of native engine
         Process.killProcess(Process.myPid());
     }

@@ -10,6 +10,9 @@ import android.view.MotionEvent;
 
 import org.libsdl.app.SDLActivity;
 
+import android.os.Handler;
+import android.os.Looper;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.HashMap;
@@ -29,7 +32,7 @@ import java.util.Set;
  * The left stick moves (W A S D), the right stick looks (relative mouse), with the sensitivity, dead
  * zone and inversion of {@link GamepadSettingsActivity}.
  *
- * In a menu (the engine says so, see {@link #menuUp()}): A is Enter, B is Esc, up and down (D-Pad and
+ * In a menu (the engine says so, see {@link #menuUp()}): A is Enter, B goes back one page, up and down (D-Pad and
  * left stick) are Shift+Tab and Tab, which move the menus' focus, left and right are the arrows; the
  * right stick still moves the cursor and the triggers click.
  *
@@ -104,6 +107,16 @@ public final class GamepadMapper {
         }
     }
 
+    private void requestMenuBack() {
+        try {
+            SharedPreferences prefs = context.getSharedPreferences(LauncherActivity.PREFS_NAME, Context.MODE_PRIVATE);
+            //noinspection ResultOfMethodCallIgnored
+            new File(prefs.getString(LauncherActivity.KEY_GAME_PATH, ""), ".gamepad_menu_back").createNewFile();
+        } catch (Exception e) {
+            Log.w(TAG, "could not ask the menu to go back", e);
+        }
+    }
+
     // -----------------------------------------------------------------------------------------
     // Buttons and D-Pad (key events)
     // -----------------------------------------------------------------------------------------
@@ -152,7 +165,7 @@ public final class GamepadMapper {
             // and take the arrows for lists and choices.
             switch (code) {
                 case KeyEvent.KEYCODE_BUTTON_A:   return KeyEvent.KEYCODE_ENTER;           // choose
-                case KeyEvent.KEYCODE_BUTTON_B:   return KeyEvent.KEYCODE_ESCAPE;          // back
+                case KeyEvent.KEYCODE_BUTTON_B:   return MENU_BACK;                        // back
                 case KeyEvent.KEYCODE_DPAD_UP:    return KEY_SHIFT_TAB;
                 case KeyEvent.KEYCODE_DPAD_DOWN:  return KeyEvent.KEYCODE_TAB;
                 case KeyEvent.KEYCODE_DPAD_LEFT:  return KeyEvent.KEYCODE_DPAD_LEFT;
@@ -174,6 +187,12 @@ public final class GamepadMapper {
     }
 
     private void apply(int target, boolean down) {
+        if (target == MENU_BACK) {
+            if (down) {
+                requestMenuBack();
+            }
+            return;
+        }
         if (target == GamepadBindings.TARGET_MOUSE_LEFT) {
             if (down) pressMouse(MotionEvent.BUTTON_PRIMARY); else releaseMouse(MotionEvent.BUTTON_PRIMARY);
         } else if (target == GamepadBindings.TARGET_MOUSE_RIGHT) {
@@ -280,12 +299,17 @@ public final class GamepadMapper {
 
     /** The menus' "previous": Shift+Tab, pressed and released as one key. */
     private static final int KEY_SHIFT_TAB = -3;
+    /** B in a menu: asks the engine to go back one page (see CXGame::Update, ".gamepad_menu_back"). */
+    private static final int MENU_BACK = -4;
+    private final Handler handler = new Handler(Looper.getMainLooper());
+    private static final long SHIFT_TAB_GAP_MS = 60;
 
     private void pressKey(int keyCode) {
         if (heldKeys.add(keyCode)) {
             if (keyCode == KEY_SHIFT_TAB) {
+                // Shift first, Tab a moment later: the menus read the Shift state when Tab arrives
                 SDLActivity.onNativeKeyDown(KeyEvent.KEYCODE_SHIFT_LEFT);
-                SDLActivity.onNativeKeyDown(KeyEvent.KEYCODE_TAB);
+                handler.postDelayed(() -> SDLActivity.onNativeKeyDown(KeyEvent.KEYCODE_TAB), SHIFT_TAB_GAP_MS);
             } else {
                 SDLActivity.onNativeKeyDown(keyCode);
             }
@@ -295,8 +319,8 @@ public final class GamepadMapper {
     private void releaseKey(int keyCode) {
         if (heldKeys.remove(keyCode)) {
             if (keyCode == KEY_SHIFT_TAB) {
-                SDLActivity.onNativeKeyUp(KeyEvent.KEYCODE_TAB);
-                SDLActivity.onNativeKeyUp(KeyEvent.KEYCODE_SHIFT_LEFT);
+                handler.postDelayed(() -> SDLActivity.onNativeKeyUp(KeyEvent.KEYCODE_TAB), SHIFT_TAB_GAP_MS + 10);
+                handler.postDelayed(() -> SDLActivity.onNativeKeyUp(KeyEvent.KEYCODE_SHIFT_LEFT), SHIFT_TAB_GAP_MS + 50);
             } else {
                 SDLActivity.onNativeKeyUp(keyCode);
             }
