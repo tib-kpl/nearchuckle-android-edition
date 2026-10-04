@@ -215,6 +215,11 @@ public class LauncherActivity extends Activity {
                     + "description: " + latest.getDescription() + "\n"
                     + "rss (kB): " + latest.getRss() + "  pss (kB): " + latest.getPss() + "\n"
                     + "time: " + new java.util.Date(latest.getTimestamp()) + "\n";
+            // For a native crash Android keeps the crash dump (a "tombstone", binary): the readable words in
+            // it name the signal, the libraries and the functions on the stack.
+            if (reason == 5) {
+                text += tombstoneWords(latest);
+            }
             try {
                 File dir = new File(editGamePath.getText().toString().trim());
                 if (dir.isDirectory()) {
@@ -231,6 +236,39 @@ public class LauncherActivity extends Activity {
                     .show();
         } catch (Throwable ignored) {
         }
+    }
+
+    /** The readable words (6+ characters) of the crash dump Android kept for a native crash. */
+    private static String tombstoneWords(android.app.ApplicationExitInfo info) {
+        StringBuilder out = new StringBuilder("\n--- crash dump (readable words) ---\n");
+        try (java.io.InputStream in = info.getTraceInputStream()) {
+            if (in == null) {
+                return out.append("(Android kept no crash dump)\n").toString();
+            }
+            byte[] data = new byte[1 << 20];
+            int length = 0;
+            int read;
+            while (length < data.length && (read = in.read(data, length, data.length - length)) > 0) {
+                length += read;
+            }
+            StringBuilder word = new StringBuilder();
+            int lines = 0;
+            for (int i = 0; i <= length && lines < 1500; i++) {
+                int c = i < length ? (data[i] & 0xFF) : 0;
+                if (c >= 32 && c < 127) {
+                    word.append((char) c);
+                } else {
+                    if (word.length() >= 6) {
+                        out.append(word).append('\n');
+                        lines++;
+                    }
+                    word.setLength(0);
+                }
+            }
+        } catch (Throwable t) {
+            out.append("(could not read it: ").append(t).append(")\n");
+        }
+        return out.toString();
     }
 
     /** The pid of the game's own process, or -1 when no game is running. */
