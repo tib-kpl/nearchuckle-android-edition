@@ -43,6 +43,14 @@
             </intent-filter>
         </activity>
 
+        <!-- Gamepad settings: camera stick, dead zone, button mapping -->
+        <activity
+            android:name=".GamepadSettingsActivity"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+            android:exported="false"
+            android:label="@string/pad_title"
+            android:theme="@style/AppTheme" />
+
         <!-- Main Game Activity (SDL3 + CryEngine + Zink) -->
         <activity
             android:name=".GameActivity"

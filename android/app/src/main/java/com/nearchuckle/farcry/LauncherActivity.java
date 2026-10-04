@@ -558,6 +558,8 @@ public class LauncherActivity extends Activity {
         // Launch Game Button
         findViewById(R.id.btn_launch_game).setOnClickListener(v -> launchGame());
         btnResumeGame.setOnClickListener(v -> resumeGame());
+        findViewById(R.id.btn_gamepad_settings).setOnClickListener(v ->
+                startActivity(new Intent(this, GamepadSettingsActivity.class)));
     }
 
     private static final String SHADERS_URL = "https://rohitcodes.fyi/nearchuckle/files/shadercache/GL_Shaders_20260517.pak";

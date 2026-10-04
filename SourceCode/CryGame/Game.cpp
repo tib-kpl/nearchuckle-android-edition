@@ -11,6 +11,8 @@
 //////////////////////////////////////////////////////////////////////
  
 #include "StdAfx.h"
+#include <stdlib.h>
+#include <stdio.h>
 #include <IStreamEngine.h>
 #include <ICryPak.h>
 #include "Game.h"
@@ -803,11 +805,14 @@ bool CXGame::Update()
 		// Tells the Java gamepad mapper whether a menu is up (A clicks there, jumps in game): a one
 		// character file in the game folder, rewritten when the state changes.
 		static int s_lastMenuState = -1;
-		int nowMenu = (m_bMenuOverlay || m_bUIOverlay) ? 1 : 0;
+		int nowMenu = m_bMenuOverlay ? 1 : 0;
 		if (nowMenu != s_lastMenuState)
 		{
 			s_lastMenuState = nowMenu;
-			FILE *pState = fopen(".gamepad_menu_state", "wb");
+			const char *pDir = getenv("FARCRY_DATA_DIR");
+			char szPath[1100];
+			snprintf(szPath, sizeof(szPath), "%s/.gamepad_menu_state", (pDir && *pDir) ? pDir : ".");
+			FILE *pState = fopen(szPath, "wb");
 			if (pState)
 			{
 				fputc(nowMenu ? '1' : '0', pState);
