@@ -30,6 +30,8 @@ public class OscManager {
     private float mouseSensitivity = 1.0f;
     private int screenWidth = 1920;
     private int screenHeight = 1080;
+    /** The first layout pass must always place the pads, even on a screen exactly as big as the defaults above. */
+    private boolean laidOut = false;
 
     public OscManager() {
         createDefaultElements();
@@ -198,7 +200,8 @@ public class OscManager {
         container.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> {
             int w = r - l;
             int h = b - t;
-            if (w > 0 && h > 0 && (w != screenWidth || h != screenHeight)) {
+            if (w > 0 && h > 0 && (!laidOut || w != screenWidth || h != screenHeight)) {
+                laidOut = true;
                 screenWidth = w;
                 screenHeight = h;
                 updateAllLayouts();
