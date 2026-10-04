@@ -1,5 +1,15 @@
 # Near Chuckle - Android Edition
 
+> [!NOTE]
+> **Fork pour la traduction française** de [Player124413/NearChuckle-android-edition](https://github.com/Player124413/NearChuckle-android-edition).
+> - Choix de la langue du jeu dans le lanceur (« Langue du jeu ») : automatique (langue de l'appareil) ou l'une des langues présentes dans `FCData/Localized` de vos fichiers (`French.pak`, `German.pak`…).
+> - Le moteur ouvre le paquet de langue choisi au lieu de toujours `English.pak`.
+> - Lanceur traduit en français.
+>
+> **Fork for the French translation** of [Player124413/NearChuckle-android-edition](https://github.com/Player124413/NearChuckle-android-edition).
+> The launcher has a "Game language" choice (automatic, or one of the languages in your game's `FCData/Localized`), the engine opens that
+> language pak instead of always `English.pak`, and the launcher is translated into French.
+
 ![Screenshot of Far Cry on Linux](assets/fort.jpg)
 
 Far Cry (CryEngine 1) ported to Android and Linux via SDL3 with support for Mesa Zink (OpenGL over Vulkan) and custom Turnip GPU drivers.
