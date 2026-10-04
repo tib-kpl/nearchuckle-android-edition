@@ -14,6 +14,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include <stdlib.h>
 #include "UIVideoPanel.h"
 #include "UISystem.h"
 
@@ -198,7 +199,19 @@ int CUIVideoPanel::Draw(int iPass)
 		float fWidth = pAbsoluteRect.fWidth;
 		float fHeight = pAbsoluteRect.fHeight;
 
-		if (m_bKeepAspect)
+		// How the video fills the panel: the launcher's choice (FC_VIDEO_FIT: 0 automatic, 1 original
+		// ratio, 2 fill and crop, 3 stretch). Automatic: a looping video (the menu's background)
+		// fills the screen, the others (intros, cutscenes) keep their own ratio.
+		int fit = 0;
+		if (const char *pFit = getenv("FC_VIDEO_FIT"))
+			fit = atoi(pFit);
+		if (fit <= 0 || fit > 3)
+			fit = m_bLooping ? 2 : (m_bKeepAspect ? 1 : 3);
+		else if (fit == 1)
+			fit = m_bKeepAspect ? 1 : 3;
+		const bool bCover = (fit == 2);
+
+		if (fit != 3)
 		{
 			IRenderer *rend = m_pUISystem->GetIRenderer();
 			float vw = (float)m_videoPlayer.GetWidth();
@@ -214,7 +227,7 @@ int CUIVideoPanel::Draw(int iPass)
 				float video_aspect = vw / vh;
 
 				float phys_w, phys_h;
-				if (phys_rect_aspect > video_aspect)
+				if ((phys_rect_aspect > video_aspect) != bCover)
 				{
 					phys_h = phys_rect_h;
 					phys_w = phys_rect_h * video_aspect;
@@ -235,7 +248,7 @@ int CUIVideoPanel::Draw(int iPass)
 		pRect.fWidth = fWidth;
 		pRect.fHeight = fHeight;
 
-		if (m_bKeepAspect)
+		if (fit == 1)
 		{
 			m_pUISystem->DrawQuad(pAbsoluteRect, m_cColor);
 		}

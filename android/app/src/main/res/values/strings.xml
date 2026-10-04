@@ -149,4 +149,9 @@
     <string name="pause_hide_controls">Hide the touch controls</string>
     <string name="pause_settings">Settings (the game stays paused)</string>
     <string name="pause_quit_game">Quit the game</string>
+    <string name="label_video_fit">Videos on screen:</string>
+    <string name="video_fit_auto">Automatic (menu background fills the screen)</string>
+    <string name="video_fit_original">Original ratio (black bars)</string>
+    <string name="video_fit_fill">Fill the screen (crop the edges)</string>
+    <string name="video_fit_stretch">Stretch to the screen</string>
 </resources>

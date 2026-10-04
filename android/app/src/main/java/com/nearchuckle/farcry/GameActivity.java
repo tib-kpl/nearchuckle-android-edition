@@ -84,6 +84,7 @@ public class GameActivity extends SDLActivity {
             }
             Os.setenv("MODULE_PATH", nativeLibDir + "/", true);
             Os.setenv("USER", "FarCryPlayer", true);
+            Os.setenv("FC_VIDEO_FIT", String.valueOf(prefs.getInt(LauncherActivity.KEY_VIDEO_FIT, 0)), true);
             Os.setenv("LOGNAME", "FarCryPlayer", true);
             Os.setenv("TMPDIR", context.getCacheDir().getAbsolutePath(), true);
         } catch (ErrnoException e) {

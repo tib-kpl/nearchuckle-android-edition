@@ -59,6 +59,7 @@ public class LauncherActivity extends Activity {
     public static final String KEY_CUSTOM_ARGS = "custom_args";
     public static final String KEY_HIDE_CONTROLS = "hide_controls";
     public static final String KEY_AUTO_LAUNCH = "auto_launch";
+    public static final String KEY_VIDEO_FIT = "video_fit";
     public static final String KEY_AUTO_HIDE_PAD = "auto_hide_touch_with_gamepad";
     /** Set by the in-game settings button: show this menu instead of starting the game again. */
     public static final String EXTRA_SHOW_MENU = "show_menu";
@@ -80,6 +81,7 @@ public class LauncherActivity extends Activity {
     private Switch switchGpuTurbo;
     private Switch switchUseZink;
     private Spinner spinnerResolution;
+    private Spinner spinnerVideoFit;
     private Spinner spinnerLanguage;
     /** the values behind spinnerLanguage: "auto", then the game's languages */
     private final List<String> languageValues = new ArrayList<>();
@@ -211,6 +213,7 @@ public class LauncherActivity extends Activity {
         switchGpuTurbo = findViewById(R.id.switch_gpu_turbo);
         switchUseZink = findViewById(R.id.switch_use_zink);
         spinnerResolution = findViewById(R.id.spinner_resolution);
+        spinnerVideoFit = findViewById(R.id.spinner_video_fit);
         spinnerLanguage = findViewById(R.id.spinner_language);
         tvFovLabel = findViewById(R.id.tv_fov_label);
         seekbarFov = findViewById(R.id.seekbar_fov);
@@ -233,6 +236,16 @@ public class LauncherActivity extends Activity {
         ArrayAdapter<String> resAdapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_spinner_dropdown_item, resOptions);
         spinnerResolution.setAdapter(resAdapter);
+
+        // How the videos fill the screen
+        String[] videoOptions = new String[]{
+                getString(R.string.video_fit_auto),
+                getString(R.string.video_fit_original),
+                getString(R.string.video_fit_fill),
+                getString(R.string.video_fit_stretch)
+        };
+        spinnerVideoFit.setAdapter(new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_dropdown_item, videoOptions));
     }
 
     // ---------- game language
@@ -386,6 +399,7 @@ public class LauncherActivity extends Activity {
 
         switchUseZink.setChecked(prefs.getBoolean(KEY_USE_ZINK, true));
         spinnerResolution.setSelection(prefs.getInt(KEY_RES_MODE, 0));
+        spinnerVideoFit.setSelection(prefs.getInt(KEY_VIDEO_FIT, 0));
         setupLanguageSpinner(path, prefs.getString(KEY_GAME_LANGUAGE, "auto"));
 
         int fov = prefs.getInt(KEY_FOV, 90);
@@ -413,6 +427,7 @@ public class LauncherActivity extends Activity {
         editor.putString(KEY_GAME_PATH, editGamePath.getText().toString().trim());
         editor.putBoolean(KEY_USE_ZINK, switchUseZink.isChecked());
         editor.putInt(KEY_RES_MODE, spinnerResolution.getSelectedItemPosition());
+        editor.putInt(KEY_VIDEO_FIT, spinnerVideoFit.getSelectedItemPosition());
         int language = spinnerLanguage.getSelectedItemPosition();
         if (language >= 0 && language < languageValues.size())
             editor.putString(KEY_GAME_LANGUAGE, languageValues.get(language));
