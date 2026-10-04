@@ -58,6 +58,8 @@ public class LauncherActivity extends Activity {
     public static final String KEY_CUSTOM_ARGS = "custom_args";
     public static final String KEY_HIDE_CONTROLS = "hide_controls";
     public static final String KEY_MOUSE_SENSITIVITY = "mouse_sensitivity";
+    /** "auto" (the device's language when the game has it) or a language pak name ("french"...) */
+    public static final String KEY_GAME_LANGUAGE = "game_language";
 
     /** Delay before the automatic update check starts, so the UI is on screen first. */
     private static final long UPDATE_CHECK_DELAY_MS = 600L;
@@ -73,6 +75,9 @@ public class LauncherActivity extends Activity {
     private Switch switchGpuTurbo;
     private Switch switchUseZink;
     private Spinner spinnerResolution;
+    private Spinner spinnerLanguage;
+    /** the values behind spinnerLanguage: "auto", then the game's languages */
+    private final List<String> languageValues = new ArrayList<>();
     private TextView tvFovLabel;
     private SeekBar seekbarFov;
     private Switch switchDevmode;
@@ -147,6 +152,7 @@ public class LauncherActivity extends Activity {
         switchGpuTurbo = findViewById(R.id.switch_gpu_turbo);
         switchUseZink = findViewById(R.id.switch_use_zink);
         spinnerResolution = findViewById(R.id.spinner_resolution);
+        spinnerLanguage = findViewById(R.id.spinner_language);
         tvFovLabel = findViewById(R.id.tv_fov_label);
         seekbarFov = findViewById(R.id.seekbar_fov);
         switchDevmode = findViewById(R.id.switch_devmode);
@@ -165,6 +171,111 @@ public class LauncherActivity extends Activity {
         ArrayAdapter<String> resAdapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_spinner_dropdown_item, resOptions);
         spinnerResolution.setAdapter(resAdapter);
+    }
+
+    // ---------- game language
+
+    /**
+     * The languages of the game in gamePath: the names of its
+     * FCData/Localized/<language>.pak files ("english", "french"...), without
+     * the patches (<language>1.pak, <language>2.pak). English first.
+     */
+    public static List<String> availableLanguages(String gamePath) {
+        List<String> languages = new ArrayList<>();
+        File localized = findChildIgnoreCase(findChildIgnoreCase(new File(gamePath), "FCData"), "Localized");
+        File[] paks = localized != null ? localized.listFiles() : null;
+        if (paks == null)
+            return languages;
+        for (File pak : paks) {
+            String name = pak.getName().toLowerCase(java.util.Locale.ROOT);
+            if (!pak.isFile() || !name.endsWith(".pak"))
+                continue;
+            name = name.substring(0, name.length() - 4);
+            if (name.isEmpty() || Character.isDigit(name.charAt(name.length() - 1)) || languages.contains(name))
+                continue;
+            languages.add(name);
+        }
+        Collections.sort(languages);
+        if (languages.remove("english"))
+            languages.add(0, "english");
+        return languages;
+    }
+
+    private static File findChildIgnoreCase(File parent, String name) {
+        if (parent == null)
+            return null;
+        File[] children = parent.listFiles();
+        if (children == null)
+            return null;
+        for (File child : children) {
+            if (child.getName().equalsIgnoreCase(name))
+                return child;
+        }
+        return null;
+    }
+
+    /** the Android language code of a game language pak, for "auto" */
+    private static final String[][] LANGUAGE_CODES = {
+            { "en", "english" }, { "fr", "french" }, { "de", "german" }, { "it", "italian" },
+            { "es", "spanish" }, { "ru", "russian" }, { "pl", "polish" }, { "cs", "czech" },
+            { "hu", "hungarian" }, { "ja", "japanese" }, { "ko", "korean" }, { "zh", "chinese" },
+            { "pt", "portuguese" }, { "nl", "dutch" }, { "tr", "turkish" },
+    };
+
+    /**
+     * The language to start the game in (NC_GAME_LANGUAGE), or null to let
+     * the engine use English: the launcher's choice, or in "auto" the
+     * device's language, when the game folder has that language's pak.
+     */
+    public static String resolveGameLanguage(android.content.Context context, String gamePath) {
+        List<String> available = availableLanguages(gamePath);
+        String chosen = context.getSharedPreferences(PREFS_NAME, MODE_PRIVATE).getString(KEY_GAME_LANGUAGE, "auto");
+        if (!"auto".equals(chosen))
+            return available.contains(chosen) ? chosen : null;
+        String code = java.util.Locale.getDefault().getLanguage();
+        for (String[] pair : LANGUAGE_CODES) {
+            if (pair[0].equals(code) && available.contains(pair[1]))
+                return pair[1];
+        }
+        return null;
+    }
+
+    private static String languageLabel(String language) {
+        switch (language) {
+            case "english": return "English";
+            case "french": return "Français";
+            case "german": return "Deutsch";
+            case "italian": return "Italiano";
+            case "spanish": return "Español";
+            case "russian": return "Русский";
+            case "polish": return "Polski";
+            case "czech": return "Čeština";
+            case "hungarian": return "Magyar";
+            case "japanese": return "日本語";
+            case "korean": return "한국어";
+            case "chinese": return "中文";
+            case "portuguese": return "Português";
+            case "dutch": return "Nederlands";
+            case "turkish": return "Türkçe";
+            default: return Character.toUpperCase(language.charAt(0)) + language.substring(1);
+        }
+    }
+
+    /** fills spinnerLanguage with "auto" and the languages found in gamePath */
+    private void setupLanguageSpinner(String gamePath, String selected) {
+        languageValues.clear();
+        languageValues.add("auto");
+        List<String> labels = new ArrayList<>();
+        labels.add(getString(R.string.language_auto));
+        for (String language : availableLanguages(gamePath)) {
+            languageValues.add(language);
+            labels.add(languageLabel(language));
+        }
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_dropdown_item, labels);
+        spinnerLanguage.setAdapter(adapter);
+        int index = languageValues.indexOf(selected);
+        spinnerLanguage.setSelection(index >= 0 ? index : 0);
     }
 
     private void setupGpuDetection() {
@@ -213,6 +324,7 @@ public class LauncherActivity extends Activity {
 
         switchUseZink.setChecked(prefs.getBoolean(KEY_USE_ZINK, true));
         spinnerResolution.setSelection(prefs.getInt(KEY_RES_MODE, 0));
+        setupLanguageSpinner(path, prefs.getString(KEY_GAME_LANGUAGE, "auto"));
 
         int fov = prefs.getInt(KEY_FOV, 90);
         seekbarFov.setProgress(Math.max(0, Math.min(50, fov - 70)));
@@ -236,6 +348,9 @@ public class LauncherActivity extends Activity {
         editor.putString(KEY_GAME_PATH, editGamePath.getText().toString().trim());
         editor.putBoolean(KEY_USE_ZINK, switchUseZink.isChecked());
         editor.putInt(KEY_RES_MODE, spinnerResolution.getSelectedItemPosition());
+        int language = spinnerLanguage.getSelectedItemPosition();
+        if (language >= 0 && language < languageValues.size())
+            editor.putString(KEY_GAME_LANGUAGE, languageValues.get(language));
 
         int fov = seekbarFov.getProgress() + 70;
         editor.putInt(KEY_FOV, fov);
@@ -634,6 +749,12 @@ public class LauncherActivity extends Activity {
         File levels = new File(folder, "Levels");
         boolean hasFcData = fcData.exists() && fcData.isDirectory();
         boolean hasLevels = levels.exists() && levels.isDirectory();
+
+        String chosenLanguage = "auto";
+        int language = spinnerLanguage.getSelectedItemPosition();
+        if (language >= 0 && language < languageValues.size())
+            chosenLanguage = languageValues.get(language);
+        setupLanguageSpinner(path, chosenLanguage);
 
         if (hasFcData || hasLevels) {
             tvGamePathStatus.setText(R.string.status_files_found);

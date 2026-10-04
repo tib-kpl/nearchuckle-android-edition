@@ -84,6 +84,19 @@ public class GameActivity extends SDLActivity {
             Log.e(TAG, "Failed setting path environment variables", e);
         }
 
+        // Game language: opens FCData/Localized/<language>.pak (CrySystem
+        // SystemInit.cpp) and sets g_language (CryGame GameActionInput.cpp)
+        String language = LauncherActivity.resolveGameLanguage(context, gamePath);
+        try {
+            if (language != null)
+                Os.setenv("NC_GAME_LANGUAGE", language, true);
+            else
+                Os.unsetenv("NC_GAME_LANGUAGE");
+        } catch (ErrnoException e) {
+            Log.e(TAG, "Failed setting the game language", e);
+        }
+        Log.i(TAG, "Game language: " + (language != null ? language : "english (engine default)"));
+
         // 2. Configure Mesa Zink (OpenGL over Vulkan)
         if (useZink) {
             try {

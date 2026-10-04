@@ -475,6 +475,19 @@ void CXGame::InitConsoleVars()
 		"Toggles the player's 'always run' setting.\n"
 		"Usage: p_always_run [0/1]\n"
 		"Default is 1 (on). Set to 0 to disable 'always run'.");
+#if defined(__ANDROID__)
+	// The launcher's language (NC_GAME_LANGUAGE, see SystemInit.cpp) is fixed
+	// for the session: the language pak opened at start-up must match the
+	// string tables and the localized speech, whatever a profile's saved
+	// g_language says.
+	const char* ncLanguage = getenv("NC_GAME_LANGUAGE");
+	if (ncLanguage && *ncLanguage)
+		g_language= pConsole->CreateVariable("g_language",ncLanguage,VF_READONLY,
+			"Sets the game language (chosen in the Android launcher).\n"
+			"Usage: g_language [english/other?]\n"
+			"Default is 'english'.");
+	else
+#endif
 	g_language= pConsole->CreateVariable("g_language","english",VF_DUMPTODISK, //|VF_READONLY,
 		"Sets the game language.\n"
 		"Usage: g_language [english/other?]\n"

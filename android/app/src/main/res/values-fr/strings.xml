@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Far Cry Android</string>
+    <string name="launcher_title">NearChuckle - Lanceur Far Cry</string>
+    <string name="launcher_subtitle">Portage Android de Far Cry (CryEngine 1) avec Mesa Zink &amp; Turnip</string>
+
+    <!-- Game Data Section -->
+    <string name="section_game_data">Fichiers du jeu Far Cry</string>
+    <string name="game_path_hint">Indiquez le dossier du jeu Far Cry (FCData, Levels)</string>
+    <string name="btn_select_folder">Choisir le dossier</string>
+    <string name="status_files_found">✓ Fichiers du jeu Far Cry trouvés</string>
+    <string name="status_files_missing">⚠ Fichiers du jeu introuvables. Indiquez le bon dossier</string>
+    <string name="folder_not_exist">⚠ Le dossier n\'existe pas</string>
+
+    <!-- Folder Picker Dialog -->
+    <string name="folder_picker_title">Choisir le dossier du jeu Far Cry</string>
+    <string name="folder_picker_select">Choisir ce dossier</string>
+    <string name="folder_level_up">.. (Dossier parent)</string>
+    <string name="status_fc_found_in_folder">✔ Fichiers de Far Cry détectés dans ce dossier !</string>
+    <string name="status_fc_select_folder_hint">Choisissez le dossier qui contient les fichiers de Far Cry (FCData, Levels)</string>
+
+    <!-- Graphics Section -->
+    <string name="section_graphics">Graphismes &amp; rendu</string>
+    <string name="switch_use_zink">Activer Mesa Zink (OpenGL sur Vulkan)</string>
+    <string name="desc_use_zink">Traduit OpenGL 2.1 vers Vulkan pour une meilleure compatibilité, shaders compris</string>
+    <string name="label_resolution">Résolution de l\'écran :</string>
+    <string name="label_fov">Champ de vision (FOV) : %d°</string>
+    <string name="switch_devmode">Mode développeur (-DEVMODE)</string>
+    <string name="label_custom_args">Arguments de lancement personnalisés :</string>
+
+    <!-- Game Language -->
+    <string name="label_language">Langue du jeu :</string>
+    <string name="language_auto">Automatique (langue de l\'appareil)</string>
+    <string name="desc_language">Langues trouvées dans FCData/Localized de vos fichiers de jeu (French.pak, German.pak…)</string>
+
+    <!-- Resolution Options -->
+    <string name="res_auto">Automatique (plein écran)</string>
+    <string name="res_1080p">1920x1080 (FHD)</string>
+    <string name="res_720p">1280x720 (HD - Recommandé)</string>
+    <string name="res_540p">960x540 (qHD - Pour les appareils plus lents)</string>
+
+    <!-- GPU Driver Section -->
+    <string name="section_driver">Pilote GPU (Turnip / Adreno)</string>
+    <string name="label_active_driver">Pilote Vulkan actif :</string>
+    <string name="btn_install_driver_zip">Installer un pilote Turnip depuis un ZIP</string>
+    <string name="btn_delete_driver">Supprimer</string>
+    <string name="switch_gpu_turbo">Mode GPU Turbo (fréquences Adreno max)</string>
+    <string name="desc_gpu_turbo">Bloque le GPU à sa fréquence maximale via adrenotools</string>
+    <string name="gpu_adreno_detected">✓ GPU Qualcomm Adreno détecté</string>
+    <string name="gpu_other_detected">GPU détecté (Mali/PowerVR/x86)</string>
+
+    <!-- Touch Controls Section -->
+    <string name="section_controls">Commandes tactiles</string>
+    <string name="btn_configure_controls">Configurer les commandes à l\'écran (EDIT)</string>
+    <string name="label_mouse_sensitivity">Sensibilité : %.1fx</string>
+    <string name="label_controls_opacity">Opacité des commandes :</string>
+    <string name="switch_hide_controls">Masquer les commandes tactiles (manette / clavier)</string>
+
+    <!-- Launch Button -->
+    <string name="btn_launch_game">LANCER FAR CRY</string>
+    <string name="btn_launch">Lancer</string>
+
+    <!-- Crash Reports & Diagnostics -->
+    <string name="title_crash_report">Rapport de plantage Far Cry</string>
+    <string name="btn_view_logs">Journaux &amp; rapports de plantage</string>
+    <string name="btn_open_report">Ouvrir le rapport</string>
+    <string name="btn_copy_crash_report">Copier tout le rapport</string>
+    <string name="btn_share_crash_report">Partager</string>
+    <string name="btn_clear_crash_report">Effacer le rapport</string>
+    <string name="toast_report_copied">Rapport de plantage copié dans le presse-papiers !</string>
+    <string name="toast_no_logs_to_copy">Aucun journal disponible</string>
+    <string name="dialog_crash_detected_title">Plantage de Far Cry détecté</string>
+    <string name="dialog_crash_detected_msg">Le jeu a rencontré une erreur lors de la dernière session. Voulez-vous voir le rapport et envoyer les journaux au développeur ?</string>
+    <string name="crash_report_diagnostic_summary">Données de diagnostic et journaux du moteur Far Cry</string>
+    <string name="crash_report_hint">Appuyez sur « Copier tout le rapport » pour l\'envoyer pour analyse</string>
+    <string name="crash_report_share_title">Envoyer le rapport de plantage via…</string>
+    <string name="crash_report_cleared">(Rapport de plantage effacé)</string>
+    <string name="crash_report_toast_cleared">Rapport effacé</string>
+
+    <!-- Driver Dialogs & Messages -->
+    <string name="choose_driver_zip_title">Choisissez l\'archive ZIP d\'un pilote Turnip</string>
+    <string name="error_no_file_manager">Aucun gestionnaire de fichiers trouvé</string>
+    <string name="toast_installing_driver">Installation du pilote Turnip depuis %s…</string>
+    <string name="dialog_driver_installed">Pilote installé !</string>
+    <string name="dialog_driver_installed_msg">Le pilote « %s » est installé et prêt à être utilisé avec Mesa Zink !</string>
+    <string name="dialog_driver_install_failed_title">Erreur d\'installation</string>
+    <string name="dialog_driver_install_failed">Échec de l\'installation du pilote : </string>
+    <string name="dialog_confirm_delete">Supprimer le pilote sélectionné ?</string>
+    <string name="dialog_delete_driver_prompt">Supprimer le pilote %s ?</string>
+    <string name="toast_driver_removed">Pilote supprimé</string>
+
+    <!-- Shaders Download -->
+    <string name="btn_download_shaders">Télécharger les shaders GL (cache de shaders)</string>
+    <string name="desc_download_shaders">Télécharge le cache de shaders OpenGL (GL_Shaders_20260517.pak) pour corriger les défauts graphiques</string>
+    <string name="dialog_shaders_downloading">Téléchargement des shaders GL…</string>
+    <string name="dialog_shaders_success">Shaders GL téléchargés et installés dans FCData !</string>
+    <string name="dialog_shaders_failed">Erreur lors du téléchargement des shaders : </string>
+    <string name="dialog_shaders_downloaded_title">Shaders téléchargés</string>
+    <string name="dialog_shaders_exists_prompt">Le fichier de shaders existe déjà (%d Ko). Le télécharger et le remplacer ?</string>
+    <string name="toast_specify_game_path_first">Indiquez d\'abord le dossier du jeu Far Cry !</string>
+    <string name="error_no_game_folder">Aucun dossier de jeu</string>
+
+    <!-- App Update (launcher self-update) -->
+    <string name="btn_check_updates">Rechercher des mises à jour</string>
+    <string name="toast_update_checking">Recherche de mises à jour…</string>
+    <string name="toast_update_up_to_date">Vous avez déjà la dernière version (%1$s)</string>
+    <string name="toast_update_check_failed">Impossible de rechercher les mises à jour. Vérifiez votre connexion Internet</string>
+    <string name="dialog_update_title">Mise à jour disponible</string>
+    <string name="dialog_update_msg">Une nouvelle version de NearChuckle est disponible : %1$s (build %2$d).\n\nVersion installée : %3$s (build %4$d).\n\nTélécharger et installer la mise à jour ?</string>
+    <string name="btn_update_download">Télécharger</string>
+    <string name="dialog_update_downloading">Téléchargement de la mise à jour…</string>
+    <string name="dialog_update_downloading_progress">Téléchargement de la mise à jour : %1$d%% (%2$s sur %3$s)</string>
+    <string name="toast_update_installing">Mise à jour téléchargée, lancement de l\'installation…</string>
+    <string name="dialog_update_failed_title">Erreur de mise à jour</string>
+    <string name="dialog_update_failed_msg">Impossible de télécharger la mise à jour : %1$s</string>
+    <string name="dialog_unknown_sources_title">Autoriser l\'installation</string>
+    <string name="dialog_unknown_sources_msg">La mise à jour est téléchargée. Autorisez cette app à installer des applications inconnues, puis l\'installation s\'ouvrira automatiquement.</string>
+
+    <!-- Game Launch Dialogs -->
+    <string name="dialog_folder_not_found_title">Dossier introuvable</string>
+    <string name="dialog_folder_not_found_msg">Le dossier des données de Far Cry (%s) n\'existe pas. Choisissez le dossier qui contient les données du jeu Far Cry.</string>
+    <string name="dialog_storage_permission_title">Autorisation de lecture</string>
+    <string name="dialog_storage_permission_msg">Pour lire les données du jeu Far Cry, vous devez accorder l\'autorisation.</string>
+    <string name="btn_permission_allow">Autoriser</string>
+    <string name="btn_permission_continue">Continuer</string>
+    <string name="dialog_game_files_missing_title">Fichiers du jeu introuvables</string>
+    <string name="dialog_game_files_missing_msg">Le dossier :\n%s\n\nne contient pas les données du jeu Far Cry (dossiers FCData, Levels ou fichiers *.pak).\n\nCopiez dans ce dossier les fichiers de Far Cry (version PC).\n\nLancer quand même ?</string>
+
+    <!-- General -->
+    <string name="error_title">Erreur</string>
+    <string name="yes">Oui</string>
+    <string name="no">Non</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Annuler</string>
+</resources>

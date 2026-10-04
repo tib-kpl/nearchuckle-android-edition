@@ -28,6 +28,11 @@
     <string name="switch_devmode">Режим разработчика (-DEVMODE)</string>
     <string name="label_custom_args">Дополнительные параметры запуска:</string>
 
+    <!-- Game Language -->
+    <string name="label_language">Язык игры:</string>
+    <string name="language_auto">Автоматически (язык устройства)</string>
+    <string name="desc_language">Языки, найденные в FCData/Localized ваших файлов игры (French.pak, German.pak...)</string>
+
     <!-- Resolution Options -->
     <string name="res_auto">Автоматически (Полный экран)</string>
     <string name="res_1080p">1920x1080 (FHD)</string>

@@ -28,6 +28,11 @@
     <string name="switch_devmode">Developer Mode (-DEVMODE)</string>
     <string name="label_custom_args">Custom launch arguments:</string>
 
+    <!-- Game Language -->
+    <string name="label_language">Game Language:</string>
+    <string name="language_auto">Automatic (device language)</string>
+    <string name="desc_language">Languages found in FCData/Localized of your game files (French.pak, German.pak...)</string>
+
     <!-- Resolution Options -->
     <string name="res_auto">Automatic (Fullscreen)</string>
     <string name="res_1080p">1920x1080 (FHD)</string>

@@ -1284,6 +1284,19 @@ bool CSystem::Init( const SSystemInitParams &params )
 	if (ICVar* cvBump = m_pConsole->GetCVar("r_Quality_BumpMapping")) cvBump->Set(3);
 	if (ICVar* cvNV30 = m_pConsole->GetCVar("r_GL_NV30_PS20")) cvNV30->Set(1);
 	if (ICVar* cvFS = m_pConsole->GetCVar("r_Fullscreen")) cvFS->Set(1);
+
+	// NC_GAME_LANGUAGE: the language the launcher chose ("french", "german"...),
+	// one of the FCData/Localized/<language>.pak files. On the desktop it comes
+	// from system.cfg (g_language), which Android ignores, so OpenBasicPaks
+	// below always opened English.pak.
+	if (const char* ncLanguage = getenv("NC_GAME_LANGUAGE"))
+	{
+		if (*ncLanguage && m_pScriptSystem)
+		{
+			m_pScriptSystem->SetGlobalValue("g_language", ncLanguage);
+			CryLogAlways("Android: game language %s (NC_GAME_LANGUAGE)", ncLanguage);
+		}
+	}
 #endif
 
 	//////////////////////////////////////////////////////////////////////////
