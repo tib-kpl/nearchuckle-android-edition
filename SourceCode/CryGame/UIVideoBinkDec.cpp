@@ -2,6 +2,12 @@
 #include <deque>
 #include <algorithm>
 #include <SDL3/SDL_mutex.h>
+#include <cstdarg>
+#include <cstdlib>
+#include <string>
+#if !defined(_WIN32)
+#include <dlfcn.h>
+#endif
 #include "StdAfx.h"
 #include "ISound.h"
 #include <ICryPak.h>
@@ -134,6 +140,68 @@ __attribute__((weak)) void CS_Update()
 }
 #endif
 
+// What the videos' sound does, appended to "video_sound.txt" in the game folder (a few hundred
+// lines at most per run), to find where it is lost.
+static void VideoSoundLog(const char* fmt, ...)
+{
+	static int s_lines = 0;
+	if (++s_lines > 400)
+		return;
+	const char* dir = getenv("FARCRY_DATA_DIR");
+	std::string path = std::string((dir && *dir) ? dir : ".") + "/video_sound.txt";
+	if (FILE* f = fopen(path.c_str(), "a"))
+	{
+		fprintf(f, "%8u ms  ", (unsigned)SDL_GetTicks());
+		va_list args;
+		va_start(args, fmt);
+		vfprintf(f, fmt, args);
+		va_end(args);
+		fputc('\n', f);
+		fclose(f);
+	}
+}
+
+// The sound system's stream functions, taken from libCrySoundSystem.so itself: the empty weak ones
+// above are in this library too, and a call can end up in them instead of the real ones (then the
+// stream is never created and the videos are silent).
+struct BinkSoundApi
+{
+#ifndef LINUX64
+	CS_STREAM* (*create)(CS_STREAMCALLBACK, int, unsigned int, int, int) = CS_Stream_Create;
+#else
+	CS_STREAM* (*create)(CS_STREAMCALLBACK, int, unsigned int, int, void*) = CS_Stream_Create;
+#endif
+	signed char (*close)(CS_STREAM*) = CS_Stream_Close;
+	int (*play)(int, CS_STREAM*) = CS_Stream_Play;
+	signed char (*stop)(CS_STREAM*) = CS_Stream_Stop;
+	void (*update)() = CS_Update;
+
+	BinkSoundApi()
+	{
+#if !defined(_WIN32)
+		void* lib = dlopen("libCrySoundSystem.so", RTLD_NOW | RTLD_NOLOAD);
+		if (!lib)
+			lib = dlopen("libCrySoundSystem.so", RTLD_NOW);
+		if (lib)
+		{
+			if (void* p = dlsym(lib, "CS_Stream_Create")) *(void**)&create = p;
+			if (void* p = dlsym(lib, "CS_Stream_Close")) *(void**)&close = p;
+			if (void* p = dlsym(lib, "CS_Stream_Play")) *(void**)&play = p;
+			if (void* p = dlsym(lib, "CS_Stream_Stop")) *(void**)&stop = p;
+			if (void* p = dlsym(lib, "CS_Update")) *(void**)&update = p;
+		}
+		VideoSoundLog("sound library %p, CS_Stream_Create %s", lib,
+			(void*)create == (void*)&CS_Stream_Create ? "is the local one (weak stub?)" : "from libCrySoundSystem.so");
+#endif
+	}
+};
+
+static BinkSoundApi& BinkSound()
+{
+	static BinkSoundApi s_api;
+	return s_api;
+}
+
 CUIVideoBinkDecoder::~CUIVideoBinkDecoder()
 {
 	Terminate();
@@ -217,6 +285,10 @@ bool CUIVideoBinkDecoder::Init(const char* pathToVideo, bool needSound)
 			__builtin_trap();
 		}
 
+		if (!needSound)
+		{
+			VideoSoundLog("%s: played without sound", pathToVideo);
+		}
 		if (needSound)
 		{
 			m_player->numAudioTracks = Bink_GetNumAudioTracks(m_player->binkHandle);
@@ -229,10 +301,17 @@ bool CUIVideoBinkDecoder::Init(const char* pathToVideo, bool needSound)
 				{
 					m_player->pcmMutex = SDL_CreateMutex();
 					m_player->audioScratch = new uint8_t[m_player->binkInfo.idealBufferSize];
-					m_audioStream = CS_Stream_Create(BinkDecAudioCallback,
+					m_audioStream = BinkSound().create(BinkDecAudioCallback,
 						kBinkAudioBlockBytes, CS_STREAM_PULL,
 						m_player->binkInfo.sampleRate, m_player);
 				}
+				VideoSoundLog("%s: %u Hz, %u channel(s), buffer %u bytes -> stream %p", pathToVideo,
+					m_player->binkInfo.sampleRate, m_player->binkInfo.nChannels, m_player->binkInfo.idealBufferSize,
+					(void*)m_audioStream);
+			}
+			else
+			{
+				VideoSoundLog("%s: no sound track", pathToVideo);
 			}
 		}
 	}
@@ -246,7 +325,7 @@ void CUIVideoBinkDecoder::Terminate()
 
 	if (m_audioStream)
 	{
-		CS_Stream_Close(m_audioStream);
+		BinkSound().close(m_audioStream);
 	}
 	m_audioStream = nullptr;
 
@@ -279,7 +358,7 @@ void CUIVideoBinkDecoder::Start()
 
 	if(m_audioStream)
 	{
-		CS_Stream_Play(CS_FREE, m_audioStream);
+		BinkSound().play(CS_FREE, m_audioStream);
 	}
 }
 
@@ -291,7 +370,7 @@ void CUIVideoBinkDecoder::Stop()
 	m_playerCmd = PLAYER_CMD_STOP;
 
 	if (m_audioStream)
-		CS_Stream_Stop(m_audioStream);
+		BinkSound().stop(m_audioStream);
 	BinkClearAudio(m_player);
 }
 
@@ -436,7 +515,20 @@ void CUIVideoBinkDecoder::Present()
 
 	if (m_audioStream)
 	{
-		CS_Update();
+		BinkSound().update();
+		static unsigned s_lastLog = 0;
+		if (thisTime - s_lastLog >= 1000)
+		{
+			s_lastLog = thisTime;
+			size_t queued = 0;
+			if (player->pcmMutex)
+			{
+				SDL_LockMutex(player->pcmMutex);
+				queued = player->pcm.size();
+				SDL_UnlockMutex(player->pcmMutex);
+			}
+			VideoSoundLog("frame %d/%d, %u samples waiting", player->framePos, player->numFrames, (unsigned)queued);
+		}
 	}
 
 	player->lastFramePos = player->framePos;

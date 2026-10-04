@@ -1023,6 +1023,33 @@ static void UpdateStream(ALStream_t* stream)
 
 	if (stream->pull && stream->callback)
 	{
+		{
+			// what the source does, once a second, in video_sound.txt (UIVideoBinkDec writes there too)
+			static std::chrono::steady_clock::time_point s_last;
+			static int s_lines = 0;
+			auto now = std::chrono::steady_clock::now();
+			if (s_lines < 200 && now - s_last >= std::chrono::seconds(1))
+			{
+				s_last = now;
+				s_lines++;
+				ALint queued = 0, processed = 0;
+				ALfloat gain = -1.0f, listenerGain = -1.0f;
+				alGetSourcei(stream->source, AL_BUFFERS_QUEUED, &queued);
+				alGetSourcei(stream->source, AL_BUFFERS_PROCESSED, &processed);
+				alGetSourcef(stream->source, AL_GAIN, &gain);
+				alGetListenerf(AL_GAIN, &listenerGain);
+				ALenum err = alGetError();
+				const char *dir = getenv("FARCRY_DATA_DIR");
+				std::string path = std::string((dir && *dir) ? dir : ".") + "/video_sound.txt";
+				if (FILE *f = fopen(path.c_str(), "a"))
+				{
+					fprintf(f, "OpenAL: source %u state 0x%x, %d queued, %d played, gain %.2f, listener %.2f, error 0x%x, %d Hz, device %s\n",
+						stream->source, state, queued, processed, gain, listenerGain, err, stream->sample_rate,
+						aldevice ? alcGetString(aldevice, ALC_DEVICE_SPECIFIER) : "(none)");
+					fclose(f);
+				}
+			}
+		}
 		// everything the producer has, as it comes
 		while (num_queued_buffers < MIN_QUEUED_BUFFERS * 4 &&
 			stream->callback((CS_STREAM*)stream, stream->buffer, stream->len, stream->userdata))
