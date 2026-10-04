@@ -43,6 +43,7 @@ import java.util.List;
 public class GameActivity extends SDLActivity {
     private static final String TAG = "NearChuckle-GameActivity";
     private OscManager oscManager;
+    private RelativeLayout oscContainer;
     /** Hardware gamepad -> WASD / mouse look / mouse buttons (see GamepadMapper). */
     private GamepadMapper gamepadMapper;
 
@@ -310,10 +311,11 @@ public class GameActivity extends SDLActivity {
     private void setupControlsOverlay() {
         if (mLayout == null) return;
 
-        SharedPreferences prefs = getSharedPreferences(LauncherActivity.PREFS_NAME, MODE_PRIVATE);
-        boolean hideControls = prefs.getBoolean(LauncherActivity.KEY_HIDE_CONTROLS, false);
+        // hidden by choice, or because a gamepad is connected (an option, on by default)
+        boolean hideControls = TouchControls.isHidden(this)
+                || (TouchControls.autoHideWithGamepad(this) && TouchControls.gamepadConnected());
 
-        RelativeLayout oscContainer = new RelativeLayout(this);
+        oscContainer = new RelativeLayout(this);
         RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         oscContainer.setLayoutParams(lp);
@@ -329,7 +331,7 @@ public class GameActivity extends SDLActivity {
         addSettingsButton();
     }
 
-    /** A small gear in the top-left corner: back to the launcher's settings (after a confirmation). */
+    /** A small gear in the top-right corner: back to the launcher's settings (after a confirmation). */
     private void addSettingsButton() {
         float density = getResources().getDisplayMetrics().density;
         int size = Math.round(40 * density);
@@ -344,25 +346,73 @@ public class GameActivity extends SDLActivity {
         background.setShape(GradientDrawable.OVAL);
         background.setColor(0x66000000);
         gear.setBackground(background);
-        gear.setOnClickListener(v -> new AlertDialog.Builder(this)
-                .setTitle(R.string.dialog_back_to_settings_title)
-                .setMessage(R.string.dialog_back_to_settings_msg)
-                .setPositiveButton(R.string.btn_back_to_settings, (dialog, which) -> backToSettings())
-                .setNegativeButton(R.string.cancel, null)
-                .show());
+        gear.setOnClickListener(v -> showPauseMenu());
         RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(size, size);
-        params.leftMargin = Math.round(8 * density);
+        // top right: the top row on the left is the touch controls' (Esc, quick save, console...)
+        params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+        params.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+        params.rightMargin = Math.round(8 * density);
         params.topMargin = Math.round(8 * density);
         mLayout.addView(gear, params);
     }
 
-    private void backToSettings() {
+    private void showPauseMenu() {
+        boolean hidden = oscContainer != null && oscContainer.getVisibility() != View.VISIBLE;
+        String[] items = {
+                getString(R.string.pause_back_to_game),
+                getString(hidden ? R.string.pause_show_controls : R.string.pause_hide_controls),
+                getString(R.string.pause_settings),
+                getString(R.string.pause_quit_game),
+        };
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.dialog_pause_title)
+                .setItems(items, (dialog, which) -> {
+                    switch (which) {
+                        case 1:
+                            setTouchControlsHidden(!hidden);
+                            break;
+                        case 2:
+                            showLauncher(false);
+                            break;
+                        case 3:
+                            showLauncher(true);
+                            break;
+                        default:
+                            break;
+                    }
+                })
+                .show();
+    }
+
+    /** Shows or hides the touch controls and remembers it (the launcher shows the same choice). */
+    private void setTouchControlsHidden(boolean hidden) {
+        if (oscContainer != null) {
+            oscContainer.setVisibility(hidden ? View.GONE : View.VISIBLE);
+        }
+        if (oscManager != null) {
+            oscManager.releaseAllPressed();
+        }
+        TouchControls.setHidden(this, hidden);
+        if (!hidden) {
+            // shown on purpose: do not hide them again on its own because a gamepad is connected
+            getSharedPreferences(LauncherActivity.PREFS_NAME, MODE_PRIVATE).edit()
+                    .putBoolean(LauncherActivity.KEY_AUTO_HIDE_PAD, false).commit();
+        }
+    }
+
+    /**
+     * Back to the launcher's settings. The game keeps running paused behind it (the launcher then
+     * offers to resume it) unless {@code quit} asks to end it.
+     */
+    private void showLauncher(boolean quit) {
         Intent intent = new Intent(this, LauncherActivity.class);
         intent.putExtra(LauncherActivity.EXTRA_SHOW_MENU, true);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
-        // onDestroy ends the game's own process; the launcher lives in the main one
-        finish();
+        if (quit) {
+            // onDestroy ends the game's own process; the launcher lives in the main one
+            finish();
+        }
     }
 
     private void hideSystemUI() {

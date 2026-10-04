@@ -138,4 +138,15 @@
     <string name="dialog_back_to_settings_title">Вернуться в настройки?</string>
     <string name="dialog_back_to_settings_msg">Текущая игра будет закрыта.</string>
     <string name="btn_back_to_settings">Настройки</string>
+    <string name="switch_auto_hide_pad">Скрывать сенсорные кнопки при подключённом геймпаде</string>
+    <string name="btn_resume_game">ВЕРНУТЬСЯ В ТЕКУЩУЮ ИГРУ</string>
+    <string name="dialog_restart_title">Перезапустить игру?</string>
+    <string name="dialog_restart_msg">Текущая игра будет закрыта и запущена заново с текущими настройками.</string>
+    <string name="btn_restart">Перезапустить</string>
+    <string name="dialog_pause_title">Меню игры</string>
+    <string name="pause_back_to_game">Назад в игру</string>
+    <string name="pause_show_controls">Показать сенсорные кнопки</string>
+    <string name="pause_hide_controls">Скрыть сенсорные кнопки</string>
+    <string name="pause_settings">Настройки (игра на паузе)</string>
+    <string name="pause_quit_game">Выйти из игры</string>
 </resources>

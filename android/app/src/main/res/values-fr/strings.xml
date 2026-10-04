@@ -138,4 +138,15 @@
     <string name="dialog_back_to_settings_title">Retourner aux paramètres ?</string>
     <string name="dialog_back_to_settings_msg">La partie en cours sera fermée.</string>
     <string name="btn_back_to_settings">Paramètres</string>
+    <string name="switch_auto_hide_pad">Masquer les commandes tactiles quand une manette est connectée</string>
+    <string name="btn_resume_game">REPRENDRE LA PARTIE EN COURS</string>
+    <string name="dialog_restart_title">Relancer le jeu ?</string>
+    <string name="dialog_restart_msg">La partie en cours sera fermée puis relancée avec les paramètres actuels.</string>
+    <string name="btn_restart">Relancer</string>
+    <string name="dialog_pause_title">Menu du jeu</string>
+    <string name="pause_back_to_game">Retour au jeu</string>
+    <string name="pause_show_controls">Afficher les commandes tactiles</string>
+    <string name="pause_hide_controls">Masquer les commandes tactiles</string>
+    <string name="pause_settings">Paramètres (le jeu reste en pause)</string>
+    <string name="pause_quit_game">Quitter le jeu</string>
 </resources>

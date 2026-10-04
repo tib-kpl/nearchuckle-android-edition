@@ -138,4 +138,15 @@
     <string name="dialog_back_to_settings_title">Back to the settings?</string>
     <string name="dialog_back_to_settings_msg">The game in progress will be closed.</string>
     <string name="btn_back_to_settings">Settings</string>
+    <string name="switch_auto_hide_pad">Hide touch controls when a gamepad is connected</string>
+    <string name="btn_resume_game">RESUME THE GAME IN PROGRESS</string>
+    <string name="dialog_restart_title">Restart the game?</string>
+    <string name="dialog_restart_msg">The game in progress will be closed and started again with the current settings.</string>
+    <string name="btn_restart">Restart</string>
+    <string name="dialog_pause_title">Game menu</string>
+    <string name="pause_back_to_game">Back to the game</string>
+    <string name="pause_show_controls">Show the touch controls</string>
+    <string name="pause_hide_controls">Hide the touch controls</string>
+    <string name="pause_settings">Settings (the game stays paused)</string>
+    <string name="pause_quit_game">Quit the game</string>
 </resources>

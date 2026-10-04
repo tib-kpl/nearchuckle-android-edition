@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.app.ActivityManager;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -58,6 +59,7 @@ public class LauncherActivity extends Activity {
     public static final String KEY_CUSTOM_ARGS = "custom_args";
     public static final String KEY_HIDE_CONTROLS = "hide_controls";
     public static final String KEY_AUTO_LAUNCH = "auto_launch";
+    public static final String KEY_AUTO_HIDE_PAD = "auto_hide_touch_with_gamepad";
     /** Set by the in-game settings button: show this menu instead of starting the game again. */
     public static final String EXTRA_SHOW_MENU = "show_menu";
     public static final String KEY_MOUSE_SENSITIVITY = "mouse_sensitivity";
@@ -89,6 +91,8 @@ public class LauncherActivity extends Activity {
     private SeekBar seekbarSensitivity;
     private Switch switchHideControls;
     private Switch switchAutoLaunch;
+    private Switch switchAutoHidePad;
+    private Button btnResumeGame;
 
     private List<DriverInfo> installedDrivers = new ArrayList<>();
     private ArrayAdapter<String> driverAdapter;
@@ -131,13 +135,47 @@ public class LauncherActivity extends Activity {
         if (savedInstanceState != null || getIntent().getBooleanExtra(EXTRA_SHOW_MENU, false)) return false;
         if (!getSharedPreferences(PREFS_NAME, MODE_PRIVATE).getBoolean(KEY_AUTO_LAUNCH, true)) return false;
         if (CrashHandler.hasUnreadCrash(this)) return false;
+        if (gameProcessPid() > 0) return false;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager()) return false;
         return checkGameFilesExist(editGamePath.getText().toString().trim());
     }
 
     @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+    }
+
+    /** The pid of the game's own process, or -1 when no game is running. */
+    private int gameProcessPid() {
+        ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+        if (manager == null) return -1;
+        List<ActivityManager.RunningAppProcessInfo> processes = manager.getRunningAppProcesses();
+        if (processes == null) return -1;
+        String name = getPackageName() + ":game";
+        for (ActivityManager.RunningAppProcessInfo info : processes) {
+            if (name.equals(info.processName)) return info.pid;
+        }
+        return -1;
+    }
+
+    private void updateResumeButton() {
+        btnResumeGame.setVisibility(gameProcessPid() > 0 ? View.VISIBLE : View.GONE);
+    }
+
+    /** Brings the game that is still running (paused behind the launcher) back to the front. */
+    private void resumeGame() {
+        Intent intent = new Intent(this, GameActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+        startActivity(intent);
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
+        updateResumeButton();
+        // the game may have shown or hidden the touch controls
+        switchHideControls.setChecked(TouchControls.isHidden(this));
         if (CrashHandler.hasUnreadCrash(this)) {
             new AlertDialog.Builder(this)
                     .setTitle(R.string.dialog_crash_detected_title)
@@ -182,6 +220,8 @@ public class LauncherActivity extends Activity {
         seekbarSensitivity = findViewById(R.id.seekbar_sensitivity);
         switchHideControls = findViewById(R.id.switch_hide_controls);
         switchAutoLaunch = findViewById(R.id.switch_auto_launch);
+        switchAutoHidePad = findViewById(R.id.switch_auto_hide_pad);
+        btnResumeGame = findViewById(R.id.btn_resume_game);
 
         // Resolution options
         String[] resOptions = new String[]{
@@ -362,7 +402,9 @@ public class LauncherActivity extends Activity {
         seekbarSensitivity.setProgress(Math.max(0, Math.min(25, sensProgress)));
         tvSensLabel.setText(getString(R.string.label_mouse_sensitivity, sens));
 
-        switchHideControls.setChecked(prefs.getBoolean(KEY_HIDE_CONTROLS, false));
+        TouchControls.syncFromPreferences(this);
+        switchHideControls.setChecked(TouchControls.isHidden(this));
+        switchAutoHidePad.setChecked(prefs.getBoolean(KEY_AUTO_HIDE_PAD, true));
         switchAutoLaunch.setChecked(prefs.getBoolean(KEY_AUTO_LAUNCH, true));
     }
 
@@ -383,9 +425,11 @@ public class LauncherActivity extends Activity {
         float sens = 0.5f + (seekbarSensitivity.getProgress() / 10.0f);
         editor.putFloat(KEY_MOUSE_SENSITIVITY, sens);
         editor.putBoolean(KEY_HIDE_CONTROLS, switchHideControls.isChecked());
+        editor.putBoolean(KEY_AUTO_HIDE_PAD, switchAutoHidePad.isChecked());
         editor.putBoolean(KEY_AUTO_LAUNCH, switchAutoLaunch.isChecked());
         // commit, not apply: the game runs in its own process and reads these on start
         editor.commit();
+        TouchControls.setHidden(this, switchHideControls.isChecked());
 
         TurnipDriverManager.setTurboEnabled(this, switchGpuTurbo.isChecked());
     }
@@ -498,6 +542,7 @@ public class LauncherActivity extends Activity {
 
         // Launch Game Button
         findViewById(R.id.btn_launch_game).setOnClickListener(v -> launchGame());
+        btnResumeGame.setOnClickListener(v -> resumeGame());
     }
 
     private static final String SHADERS_URL = "https://rohitcodes.fyi/nearchuckle/files/shadercache/GL_Shaders_20260517.pak";
@@ -962,6 +1007,19 @@ public class LauncherActivity extends Activity {
     }
 
     private void launchGame() {
+        int running = gameProcessPid();
+        if (running > 0) {
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.dialog_restart_title)
+                    .setMessage(R.string.dialog_restart_msg)
+                    .setPositiveButton(R.string.btn_restart, (dialog, which) -> {
+                        android.os.Process.killProcess(running);
+                        new Handler(Looper.getMainLooper()).postDelayed(this::launchGame, 700);
+                    })
+                    .setNegativeButton(R.string.cancel, null)
+                    .show();
+            return;
+        }
         savePreferences();
         String gamePath = editGamePath.getText().toString().trim();
         File f = new File(gamePath);
