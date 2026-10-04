@@ -811,7 +811,6 @@ bool CXGame::Update()
 		// ".gamepad_menu_cmd" in the game folder: 'n' next / 'p' previous choice (the menus' tab
 		// stops, as Tab and Shift+Tab), 'b' back. Back from a menu page is the "Main menu" button
 		// (GotoPage); from the main page it is what Esc is (back to the game, if one is running).
-		if (m_bMenuOverlay)
 		{
 			static float s_lastCmdPoll = 0.0f;
 			float fNow = m_pSystem->GetITimer()->GetAsyncCurTime();
@@ -829,7 +828,19 @@ bool CXGame::Update()
 						int c;
 						while ((c = fgetc(pCmd)) != EOF)
 						{
-							if (c == 'n' && m_pUISystem)
+							if (c == 's' && !m_bMenuOverlay)
+							{
+								SendMessage("SaveGame");   // quick save (F5 is not bound in this game)
+							}
+							else if (c == 'l')
+							{
+								SendMessage("LoadGame");   // quick load
+							}
+							else if (!m_bMenuOverlay)
+							{
+								// the rest is for the menus
+							}
+							else if (c == 'n' && m_pUISystem)
 							{
 								m_pUISystem->NextTabStop();
 							}

@@ -211,8 +211,6 @@ public class GameActivity extends SDLActivity {
         args.add("\"r_Fullscreen 1\"");
 
         // Graphics quality settings for full SM2.0 lighting, water, and 3D menu background
-        args.add("\"r_Quality_BumpMapping 3\"");
-        args.add("\"r_NoPS20 0\"");
         args.add("\"r_GL_NV30_PS20 1\"");
         args.add("\"GL_NV30_PS20 1\"");
 
@@ -401,10 +399,10 @@ public class GameActivity extends SDLActivity {
                 .setItems(items, (dialog, which) -> {
                     switch (which) {
                         case 1:
-                            tapKey(KEY_F5);   // quick save
+                            engineCommand('s');   // quick save
                             break;
                         case 2:
-                            tapKey(KEY_F9);   // quick load
+                            engineCommand('l');   // quick load
                             break;
                         case 3:
                             setTouchControlsHidden(!hidden);
@@ -420,6 +418,19 @@ public class GameActivity extends SDLActivity {
                     }
                 })
                 .show();
+    }
+
+    /** A command for the engine (CXGame::Update reads ".gamepad_menu_cmd" in the game folder). */
+    private void engineCommand(char command) {
+        try {
+            String gamePath = getSharedPreferences(LauncherActivity.PREFS_NAME, MODE_PRIVATE)
+                    .getString(LauncherActivity.KEY_GAME_PATH, "");
+            try (java.io.FileOutputStream out = new java.io.FileOutputStream(new File(gamePath, ".gamepad_menu_cmd"), true)) {
+                out.write(command);
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "could not send a command to the engine", e);
+        }
     }
 
     private static final int KEY_F5 = 135;

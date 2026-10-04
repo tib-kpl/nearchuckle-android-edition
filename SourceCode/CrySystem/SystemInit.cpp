@@ -1279,9 +1279,21 @@ bool CSystem::Init( const SSystemInitParams &params )
 #endif
 
 #ifdef __ANDROID__
+	// the settings the game saved last time (its options menu), if any: then they are the player's
+	bool bAndroidSettings = false;
+	if (FILE *pSettings = fopen("android_settings.cfg", "rb"))
+	{
+		fclose(pSettings);
+		CryLogAlways("Android: loading android_settings.cfg");
+		LoadConfiguration("android_settings.cfg");
+		bAndroidSettings = true;
+	}
 	if (m_rDriver) m_rDriver->Set("OpenGL");
-	if (ICVar* cvNoPS20 = m_pConsole->GetCVar("r_NoPS20")) cvNoPS20->Set(0);
-	if (ICVar* cvBump = m_pConsole->GetCVar("r_Quality_BumpMapping")) cvBump->Set(3);
+	if (!bAndroidSettings)
+	{
+		if (ICVar* cvNoPS20 = m_pConsole->GetCVar("r_NoPS20")) cvNoPS20->Set(0);
+		if (ICVar* cvBump = m_pConsole->GetCVar("r_Quality_BumpMapping")) cvBump->Set(3);
+	}
 	if (ICVar* cvNV30 = m_pConsole->GetCVar("r_GL_NV30_PS20")) cvNV30->Set(1);
 	if (ICVar* cvFS = m_pConsole->GetCVar("r_Fullscreen")) cvFS->Set(1);
 

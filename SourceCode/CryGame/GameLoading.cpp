@@ -1639,6 +1639,31 @@ public:
 	}
 };
 
+#ifdef __ANDROID__
+//////////////////////////////////////////////////////////////////////////
+// Android: the settings are kept in android_settings.cfg (system.cfg is a PC one, removed because
+// its renderer settings break the game here), without what the launcher sets each time.
+class CAndroidCVarSaveDump : public ICVarDumpSink
+{
+	ICVarDumpSink *m_pInner;
+public:
+	CAndroidCVarSaveDump(ICVarDumpSink *pInner) : m_pInner(pInner) {}
+	virtual void OnElementFound(ICVar *pCVar)
+	{
+		if (!pCVar)
+			return;
+		static const char *const s_skip[] = { "r_Driver", "r_Width", "r_Height", "r_Fullscreen", "r_ColorBits",
+			"r_DepthBits", "r_StencilBits", "g_language", "r_GL_NV30_PS20", "sys_firstlaunch", 0 };
+		for (int i = 0; s_skip[i]; i++)
+		{
+			if (!stricmp(pCVar->GetName(), s_skip[i]))
+				return;
+		}
+		m_pInner->OnElementFound(pCVar);
+	}
+};
+#endif
+
 //////////////////////////////////////////////////////////////////////////
 class CActionMapDumpSink : public IActionMapDumpSink
 {
@@ -1722,6 +1747,15 @@ void CXGame::SaveConfiguration( const char *pszSystemCfg,const char *pszGameCfg,
 	remove("SYSTEM.CFG");
 	remove("SystemCfgOverride.Cfg");
 	remove("systemcfgoverride.cfg");
+	pFile=fxopen("android_settings.cfg", "wb");
+	if (pFile)
+	{
+		fputs("-- [System-Configuration] (Android: the game's own settings, read at start)\r\n\r\n", pFile);
+		CCVarSaveDump SaveDump(pFile);
+		CAndroidCVarSaveDump AndroidDump(&SaveDump);
+		m_pSystem->GetIConsole()->DumpCVars(&AndroidDump);
+		fclose(pFile);
+	}
 #else
 	pFile=fxopen(sSystemCfg.c_str(), "wb");
 	if (pFile)
