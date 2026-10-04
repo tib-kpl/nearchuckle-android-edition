@@ -132,4 +132,10 @@
     <string name="no">No</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
+    <string name="switch_auto_launch">Start the game automatically when its files are found</string>
+    <string name="desc_auto_launch">Skips this menu at launch. The gear button over the game comes back here.</string>
+    <string name="desc_settings_overlay">Settings</string>
+    <string name="dialog_back_to_settings_title">Back to the settings?</string>
+    <string name="dialog_back_to_settings_msg">The game in progress will be closed.</string>
+    <string name="btn_back_to_settings">Settings</string>
 </resources>

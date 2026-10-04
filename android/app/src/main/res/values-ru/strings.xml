@@ -132,4 +132,10 @@
     <string name="no">Нет</string>
     <string name="ok">OK</string>
     <string name="cancel">Отмена</string>
+    <string name="switch_auto_launch">Запускать игру автоматически, если файлы найдены</string>
+    <string name="desc_auto_launch">Пропускает это меню при запуске. Кнопка-шестерёнка поверх игры возвращает сюда.</string>
+    <string name="desc_settings_overlay">Настройки</string>
+    <string name="dialog_back_to_settings_title">Вернуться в настройки?</string>
+    <string name="dialog_back_to_settings_msg">Текущая игра будет закрыта.</string>
+    <string name="btn_back_to_settings">Настройки</string>
 </resources>

@@ -57,6 +57,9 @@ public class LauncherActivity extends Activity {
     public static final String KEY_DEVMODE = "devmode";
     public static final String KEY_CUSTOM_ARGS = "custom_args";
     public static final String KEY_HIDE_CONTROLS = "hide_controls";
+    public static final String KEY_AUTO_LAUNCH = "auto_launch";
+    /** Set by the in-game settings button: show this menu instead of starting the game again. */
+    public static final String EXTRA_SHOW_MENU = "show_menu";
     public static final String KEY_MOUSE_SENSITIVITY = "mouse_sensitivity";
     /** "auto" (the device's language when the game has it) or a language pak name ("french"...) */
     public static final String KEY_GAME_LANGUAGE = "game_language";
@@ -85,6 +88,7 @@ public class LauncherActivity extends Activity {
     private TextView tvSensLabel;
     private SeekBar seekbarSensitivity;
     private Switch switchHideControls;
+    private Switch switchAutoLaunch;
 
     private List<DriverInfo> installedDrivers = new ArrayList<>();
     private ArrayAdapter<String> driverAdapter;
@@ -112,6 +116,23 @@ public class LauncherActivity extends Activity {
 
         // Remove APK files left over by previous sessions (the fresh one is downloaded on demand).
         UpdateManager.clearDownloadedUpdates(this);
+
+        if (shouldAutoLaunch(savedInstanceState)) {
+            new Handler(Looper.getMainLooper()).post(this::launchGame);
+        }
+    }
+
+    /**
+     * Starts the game straight away when it can: the option is on, its files are there, the storage
+     * permission is granted, the last run did not crash and the player did not come here on purpose
+     * (the settings button over the game).
+     */
+    private boolean shouldAutoLaunch(Bundle savedInstanceState) {
+        if (savedInstanceState != null || getIntent().getBooleanExtra(EXTRA_SHOW_MENU, false)) return false;
+        if (!getSharedPreferences(PREFS_NAME, MODE_PRIVATE).getBoolean(KEY_AUTO_LAUNCH, true)) return false;
+        if (CrashHandler.hasUnreadCrash(this)) return false;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager()) return false;
+        return checkGameFilesExist(editGamePath.getText().toString().trim());
     }
 
     @Override
@@ -160,6 +181,7 @@ public class LauncherActivity extends Activity {
         tvSensLabel = findViewById(R.id.tv_sensitivity_label);
         seekbarSensitivity = findViewById(R.id.seekbar_sensitivity);
         switchHideControls = findViewById(R.id.switch_hide_controls);
+        switchAutoLaunch = findViewById(R.id.switch_auto_launch);
 
         // Resolution options
         String[] resOptions = new String[]{
@@ -341,6 +363,7 @@ public class LauncherActivity extends Activity {
         tvSensLabel.setText(getString(R.string.label_mouse_sensitivity, sens));
 
         switchHideControls.setChecked(prefs.getBoolean(KEY_HIDE_CONTROLS, false));
+        switchAutoLaunch.setChecked(prefs.getBoolean(KEY_AUTO_LAUNCH, true));
     }
 
     private void savePreferences() {
@@ -360,7 +383,9 @@ public class LauncherActivity extends Activity {
         float sens = 0.5f + (seekbarSensitivity.getProgress() / 10.0f);
         editor.putFloat(KEY_MOUSE_SENSITIVITY, sens);
         editor.putBoolean(KEY_HIDE_CONTROLS, switchHideControls.isChecked());
-        editor.apply();
+        editor.putBoolean(KEY_AUTO_LAUNCH, switchAutoLaunch.isChecked());
+        // commit, not apply: the game runs in its own process and reads these on start
+        editor.commit();
 
         TurnipDriverManager.setTurboEnabled(this, switchGpuTurbo.isChecked());
     }

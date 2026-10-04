@@ -388,6 +388,22 @@
                 android:text="@string/switch_hide_controls"
                 android:textColor="@color/text_primary"
                 android:textSize="14sp" />
+
+            <Switch
+                android:id="@+id/switch_auto_launch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/switch_auto_launch"
+                android:textColor="@color/text_primary"
+                android:textSize="14sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/desc_auto_launch"
+                android:textColor="@color/text_muted"
+                android:textSize="11sp" />
         </LinearLayout>
 
         <!-- CHECK FOR UPDATES BUTTON -->

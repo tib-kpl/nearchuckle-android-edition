@@ -18,6 +18,11 @@ import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
+import android.app.AlertDialog;
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
+import android.view.Gravity;
+import android.widget.TextView;
 import android.widget.RelativeLayout;
 
 import com.nearchuckle.farcry.controls.OscManager;
@@ -321,6 +326,43 @@ public class GameActivity extends SDLActivity {
         }
 
         mLayout.addView(oscContainer);
+        addSettingsButton();
+    }
+
+    /** A small gear in the top-left corner: back to the launcher's settings (after a confirmation). */
+    private void addSettingsButton() {
+        float density = getResources().getDisplayMetrics().density;
+        int size = Math.round(40 * density);
+        TextView gear = new TextView(this);
+        gear.setText("\u2699");
+        gear.setTextColor(Color.WHITE);
+        gear.setTextSize(22);
+        gear.setGravity(Gravity.CENTER);
+        gear.setAlpha(0.35f);
+        gear.setContentDescription(getString(R.string.desc_settings_overlay));
+        GradientDrawable background = new GradientDrawable();
+        background.setShape(GradientDrawable.OVAL);
+        background.setColor(0x66000000);
+        gear.setBackground(background);
+        gear.setOnClickListener(v -> new AlertDialog.Builder(this)
+                .setTitle(R.string.dialog_back_to_settings_title)
+                .setMessage(R.string.dialog_back_to_settings_msg)
+                .setPositiveButton(R.string.btn_back_to_settings, (dialog, which) -> backToSettings())
+                .setNegativeButton(R.string.cancel, null)
+                .show());
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(size, size);
+        params.leftMargin = Math.round(8 * density);
+        params.topMargin = Math.round(8 * density);
+        mLayout.addView(gear, params);
+    }
+
+    private void backToSettings() {
+        Intent intent = new Intent(this, LauncherActivity.class);
+        intent.putExtra(LauncherActivity.EXTRA_SHOW_MENU, true);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+        // onDestroy ends the game's own process; the launcher lives in the main one
+        finish();
     }
 
     private void hideSystemUI() {

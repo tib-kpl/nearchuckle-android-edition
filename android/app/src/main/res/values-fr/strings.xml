@@ -132,4 +132,10 @@
     <string name="no">Non</string>
     <string name="ok">OK</string>
     <string name="cancel">Annuler</string>
+    <string name="switch_auto_launch">Lancer le jeu automatiquement si ses fichiers sont trouvés</string>
+    <string name="desc_auto_launch">Ignore ce menu au lancement. Le bouton engrenage affiché sur le jeu y revient.</string>
+    <string name="desc_settings_overlay">Paramètres</string>
+    <string name="dialog_back_to_settings_title">Retourner aux paramètres ?</string>
+    <string name="dialog_back_to_settings_msg">La partie en cours sera fermée.</string>
+    <string name="btn_back_to_settings">Paramètres</string>
 </resources>

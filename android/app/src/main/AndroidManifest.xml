@@ -46,6 +46,7 @@
         <!-- Main Game Activity (SDL3 + CryEngine + Zink) -->
         <activity
             android:name=".GameActivity"
+            android:process=":game"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|keyboard"
             android:exported="false"
             android:label="@string/app_name"

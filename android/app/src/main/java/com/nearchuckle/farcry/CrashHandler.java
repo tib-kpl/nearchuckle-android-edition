@@ -31,6 +31,7 @@ import java.util.Locale;
 public class CrashHandler implements Thread.UncaughtExceptionHandler {
     private static final String TAG = "NearChuckle-CrashHandler";
     private static final String CRASH_FILE_NAME = "last_crash.txt";
+    private static final String UNREAD_MARKER = "unread_crash";
     private static final String PREF_CRASH = "farcry_crash_info";
     private static final String KEY_HAS_UNREAD_CRASH = "has_unread_crash";
     private static final String KEY_CRASH_TIMESTAMP = "crash_timestamp";
@@ -275,6 +276,9 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
             try (FileOutputStream fos = new FileOutputStream(crashFile)) {
                 fos.write(report.getBytes(java.nio.charset.StandardCharsets.UTF_8));
             }
+            // A marker file too: the game and the launcher are different processes, which do not see
+            // each other's SharedPreferences changes while they run.
+            new File(context.getFilesDir(), UNREAD_MARKER).createNewFile();
             context.getSharedPreferences(PREF_CRASH, Context.MODE_PRIVATE).edit()
                     .putBoolean(KEY_HAS_UNREAD_CRASH, true)
                     .putLong(KEY_CRASH_TIMESTAMP, System.currentTimeMillis())
@@ -303,17 +307,18 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
     }
 
     public static boolean hasUnreadCrash(Context context) {
-        return context.getSharedPreferences(PREF_CRASH, Context.MODE_PRIVATE)
-                .getBoolean(KEY_HAS_UNREAD_CRASH, false);
+        return new File(context.getFilesDir(), UNREAD_MARKER).exists();
     }
 
     public static void markCrashAsRead(Context context) {
+        new File(context.getFilesDir(), UNREAD_MARKER).delete();
         context.getSharedPreferences(PREF_CRASH, Context.MODE_PRIVATE).edit()
                 .putBoolean(KEY_HAS_UNREAD_CRASH, false)
                 .apply();
     }
 
     public static void clearCrashReport(Context context) {
+        new File(context.getFilesDir(), UNREAD_MARKER).delete();
         File crashFile = new File(context.getFilesDir(), CRASH_FILE_NAME);
         if (crashFile.exists()) {
             crashFile.delete();
