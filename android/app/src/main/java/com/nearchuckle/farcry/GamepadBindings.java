@@ -72,7 +72,10 @@ public final class GamepadBindings {
     private GamepadBindings() {}
 
     private static SharedPreferences prefs(Context context) {
-        return context.getSharedPreferences(LauncherActivity.PREFS_NAME, Context.MODE_PRIVATE);
+        // The game runs in a process of its own (":game") and the settings screen in the launcher's:
+        // MODE_MULTI_PROCESS reads the file again when the other process changed it.
+        //noinspection deprecation
+        return context.getSharedPreferences(LauncherActivity.PREFS_NAME, Context.MODE_PRIVATE | Context.MODE_MULTI_PROCESS);
     }
 
     private static String prefKey(Action action) {
