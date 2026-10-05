@@ -3,6 +3,7 @@ package com.nearchuckle.farcry;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.SystemClock;
+import android.view.Choreographer;
 import android.util.Log;
 import android.view.InputDevice;
 import android.view.KeyEvent;
@@ -46,7 +47,7 @@ public final class GamepadMapper {
 
     private static final float TRIGGER_PRESS = 0.35f;
     private static final float TRIGGER_RELEASE = 0.20f;
-    /** Mouse pixels per motion event at full deflection and sensitivity 1. */
+    /** Mouse pixels per 1/60 s at full deflection and sensitivity 1. */
     private static final float LOOK_GAIN = 10f;
 
     private final Context context;
@@ -60,6 +61,40 @@ public final class GamepadMapper {
     private boolean moveUp, moveDown, moveLeft, moveRight;
     private boolean triggerL, triggerR;
     private float lookRemainderX, lookRemainderY;
+    /** Where the right stick is (after the dead zone and curve), turned into mouse motion each frame. */
+    private float lookX, lookY;
+    private boolean lookTicking;
+    private long lookLastNanos;
+
+    /**
+     * The camera turns at every frame of the display while the right stick is pushed: Android sends
+     * a stick event only when its position changes, so turning on the events alone stopped the
+     * camera whenever the stick was held still (the jerky look).
+     */
+    private final Choreographer.FrameCallback lookTick = new Choreographer.FrameCallback() {
+        @Override
+        public void doFrame(long frameTimeNanos) {
+            if (lookX == 0f && lookY == 0f) {
+                lookTicking = false;
+                lookRemainderX = lookRemainderY = 0f;
+                return;
+            }
+            float frames = lookLastNanos == 0 ? 1f : (frameTimeNanos - lookLastNanos) / 16_666_667f;
+            frames = Math.max(0f, Math.min(frames, 4f));
+            lookLastNanos = frameTimeNanos;
+            float gain = LOOK_GAIN * lookSensitivity * mouseSensitivity() * frames;
+            lookRemainderX += lookX * gain;
+            lookRemainderY += lookY * gain;
+            int dx = (int) lookRemainderX;
+            int dy = (int) lookRemainderY;
+            lookRemainderX -= dx;
+            lookRemainderY -= dy;
+            if (dx != 0 || dy != 0) {
+                SDLActivity.onNativeMouse(0, MotionEvent.ACTION_MOVE, dx, dy, true);
+            }
+            Choreographer.getInstance().postFrameCallback(this);
+        }
+    };
 
     /** What each pad button did when it went down, so it is undone the same way on release. */
     private final Map<Integer, Integer> pressedAs = new HashMap<>();
@@ -307,19 +342,12 @@ public final class GamepadMapper {
         if (invertY) {
             ry = -ry;
         }
-        if (rx != 0f || ry != 0f) {
-            float gain = LOOK_GAIN * lookSensitivity * mouseSensitivity();
-            lookRemainderX += rx * gain;
-            lookRemainderY += ry * gain;
-            int dx = (int) lookRemainderX;
-            int dy = (int) lookRemainderY;
-            lookRemainderX -= dx;
-            lookRemainderY -= dy;
-            if (dx != 0 || dy != 0) {
-                SDLActivity.onNativeMouse(0, MotionEvent.ACTION_MOVE, dx, dy, true);
-            }
-        } else {
-            lookRemainderX = lookRemainderY = 0f;
+        lookX = rx;
+        lookY = ry;
+        if ((rx != 0f || ry != 0f) && !lookTicking) {
+            lookTicking = true;
+            lookLastNanos = 0;
+            Choreographer.getInstance().postFrameCallback(lookTick);
         }
 
         // Triggers read as axes: the same as the trigger buttons
@@ -436,6 +464,7 @@ public final class GamepadMapper {
         }
         moveUp = moveDown = moveLeft = moveRight = false;
         triggerL = triggerR = false;
+        lookX = lookY = 0f;
         pressedAs.clear();
         releaseMouse(MotionEvent.BUTTON_PRIMARY);
         releaseMouse(MotionEvent.BUTTON_SECONDARY);

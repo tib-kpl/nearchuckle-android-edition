@@ -592,6 +592,12 @@ bool CGLRenderer::CheckOGLExtensions(void)
 
 /////////////////////////////////////////////////////////////////////////////////////
 
+#ifdef __ANDROID__
+  // The texture streaming sets the base level to the first mip it has loaded: a texture stuck there
+  // drew as its smallest mip (flat water, blurred videos with Mesa's Zink, which has the extension;
+  // GL4ES has not). The textures are drawn whole, as with GL4ES.
+  SUPPORTS_GL_SGIS_texture_lod = 0;
+#endif
   if (!SUPPORTS_GL_SGIS_texture_lod)
     iLog->Log("  ...GL_SGIS_texture_lod not found\n");
   else
@@ -1149,6 +1155,11 @@ bool CGLRenderer::CheckOGLExtensions(void)
 
   /////////////////////////////////////////////////////////////////////////////////////
 
+#ifdef __ANDROID__
+  // With it the renderer takes the GPU for a Radeon and draws with the old ATI shader paths (Mesa's
+  // Zink has the extension, GL4ES has not): the ARB programs are used, as with GL4ES.
+  SUPPORTS_GL_ATI_fragment_shader = 0;
+#endif
   if (!SUPPORTS_GL_ATI_fragment_shader)
     iLog->Log("  ...GL_ATI_fragment_shader not found.\n");
   else
