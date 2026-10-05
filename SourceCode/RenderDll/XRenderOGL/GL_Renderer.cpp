@@ -1564,10 +1564,18 @@ unsigned int CGLRenderer::DownLoadToVideoMemory(unsigned char *data,int w, int h
       eTT = eTT_Rectangle;
   }
   if (tnum == 0)
-    glGenTextures(1,&tnum);
+  {
+    // A name the texture manager knows already (m_RefTexs, which can keep the name of a texture
+    // that is gone) would make SetTexture bind that texture instead: Mesa gives deleted names
+    // again (GL4ES does not), and the videos showed another, blurred picture. Such names are
+    // skipped (and kept, so that they are not given back).
+    glGenTextures(1, &tnum);
+    for (int tries = 0; tries < 64 && m_TexMan->GetByID(tnum); tries++)
+      glGenTextures(1, &tnum);
+  }
   assert(tnum<14000);
-  
-  SetTexture(tnum, eTT); 
+
+  SetTexture(tnum, eTT);
   int tgt = GL_TEXTURE_2D;
   if (eTT == eTT_Rectangle)
     tgt = GL_TEXTURE_RECTANGLE_NV;
