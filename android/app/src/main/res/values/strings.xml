@@ -50,9 +50,9 @@
     <string name="gpu_other_detected">GPU detected (Mali/PowerVR/x86)</string>
 
     <!-- Touch Controls Section -->
-    <string name="section_controls">Touch Controls</string>
+    <string name="section_controls">Controls (touch screen and gamepad)</string>
     <string name="btn_configure_controls">Configure On-Screen Controls (EDIT)</string>
-    <string name="label_mouse_sensitivity">Sensitivity: %.1fx</string>
+    <string name="label_mouse_sensitivity">Touch screen sensitivity: %.1fx</string>
     <string name="label_controls_opacity">Controls Opacity:</string>
     <string name="switch_hide_controls">Hide touch controls (for gamepad / keyboard)</string>
 
@@ -154,7 +154,7 @@
     <string name="video_fit_original">Original ratio (black bars)</string>
     <string name="video_fit_fill">Fill the screen (crop the edges)</string>
     <string name="video_fit_stretch">Stretch to the screen</string>
-    <string name="btn_gamepad_settings">Gamepad settings (buttons, camera stick)</string>
+    <string name="btn_gamepad_settings">Gamepad settings (buttons, camera stick speed)</string>
     <string name="pad_title">Gamepad</string>
     <string name="pad_sensitivity">Camera stick speed: %.1f</string>
     <string name="pad_deadzone">Camera stick dead zone: %.2f</string>

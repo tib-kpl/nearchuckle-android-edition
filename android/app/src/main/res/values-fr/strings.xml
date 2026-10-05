@@ -50,9 +50,9 @@
     <string name="gpu_other_detected">GPU détecté (Mali/PowerVR/x86)</string>
 
     <!-- Touch Controls Section -->
-    <string name="section_controls">Commandes tactiles</string>
+    <string name="section_controls">Commandes (tactiles et manette)</string>
     <string name="btn_configure_controls">Configurer les commandes à l\'écran (EDIT)</string>
-    <string name="label_mouse_sensitivity">Sensibilité : %.1fx</string>
+    <string name="label_mouse_sensitivity">Sensibilité tactile : %.1fx</string>
     <string name="label_controls_opacity">Opacité des commandes :</string>
     <string name="switch_hide_controls">Masquer les commandes tactiles (manette / clavier)</string>
 
@@ -154,7 +154,7 @@
     <string name="video_fit_original">Format d\'origine (bandes noires)</string>
     <string name="video_fit_fill">Remplir l\'écran (bords rognés)</string>
     <string name="video_fit_stretch">Étirer à l\'écran</string>
-    <string name="btn_gamepad_settings">Réglages de la manette (boutons, stick caméra)</string>
+    <string name="btn_gamepad_settings">Réglages de la manette (boutons, vitesse du stick caméra)</string>
     <string name="pad_title">Manette</string>
     <string name="pad_sensitivity">Vitesse du stick caméra : %.1f</string>
     <string name="pad_deadzone">Zone morte du stick caméra : %.2f</string>

@@ -82,7 +82,7 @@ public final class GamepadMapper {
             float frames = lookLastNanos == 0 ? 1f : (frameTimeNanos - lookLastNanos) / 16_666_667f;
             frames = Math.max(0f, Math.min(frames, 4f));
             lookLastNanos = frameTimeNanos;
-            float gain = LOOK_GAIN * lookSensitivity * mouseSensitivity() * frames;
+            float gain = LOOK_GAIN * lookSensitivity * frames;
             lookRemainderX += lookX * gain;
             lookRemainderY += lookY * gain;
             int dx = (int) lookRemainderX;

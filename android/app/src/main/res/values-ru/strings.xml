@@ -50,9 +50,9 @@
     <string name="gpu_other_detected">Обнаружен графический процессор (Mali/PowerVR/x86)</string>
 
     <!-- Touch Controls Section -->
-    <string name="section_controls">Сенсорное управление</string>
+    <string name="section_controls">Управление (сенсорное и геймпад)</string>
     <string name="btn_configure_controls">Настройка экранных кнопок (EDIT)</string>
-    <string name="label_mouse_sensitivity">Чувствительность: %.1fx</string>
+    <string name="label_mouse_sensitivity">Чувствительность сенсора: %.1fx</string>
     <string name="label_controls_opacity">Прозрачность кнопок:</string>
     <string name="switch_hide_controls">Скрыть сенсорные кнопки (для геймпада / клавиатуры)</string>
 
@@ -154,7 +154,7 @@
     <string name="video_fit_original">Исходные пропорции (чёрные полосы)</string>
     <string name="video_fit_fill">На весь экран (с обрезкой)</string>
     <string name="video_fit_stretch">Растянуть на экран</string>
-    <string name="btn_gamepad_settings">Настройки геймпада (кнопки, стик камеры)</string>
+    <string name="btn_gamepad_settings">Настройки геймпада (кнопки, скорость стика камеры)</string>
     <string name="pad_title">Геймпад</string>
     <string name="pad_sensitivity">Скорость стика камеры: %.1f</string>
     <string name="pad_deadzone">Мёртвая зона стика камеры: %.2f</string>
