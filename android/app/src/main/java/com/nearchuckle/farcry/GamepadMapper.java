@@ -48,7 +48,7 @@ public final class GamepadMapper {
     private static final float TRIGGER_PRESS = 0.35f;
     private static final float TRIGGER_RELEASE = 0.20f;
     /** Mouse pixels per 1/60 s at full deflection and sensitivity 1. */
-    private static final float LOOK_GAIN = 10f;
+    private static final float LOOK_GAIN = 25f;
 
     private final Context context;
     private final Map<Integer, GamepadBindings.Action> bindings;

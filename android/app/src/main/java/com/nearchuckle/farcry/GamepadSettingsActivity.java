@@ -25,7 +25,7 @@ import java.util.List;
  */
 public class GamepadSettingsActivity extends Activity {
 
-    private static final int SENS_MAX = 40;        // 0.2 .. 4.2
+    private static final int SENS_MAX = 58;        // 0.2 .. 6.0
     private static final int DEADZONE_MAX = 40;    // 0.05 .. 0.45
 
     private final List<Button> actionButtons = new ArrayList<>();
