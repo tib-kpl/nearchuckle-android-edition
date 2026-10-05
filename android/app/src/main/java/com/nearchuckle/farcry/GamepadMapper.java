@@ -51,10 +51,10 @@ public final class GamepadMapper {
     private static final float LOOK_GAIN = 25f;
 
     private final Context context;
-    private final Map<Integer, GamepadBindings.Action> bindings;
-    private final float deadzone;
-    private final float lookSensitivity;
-    private final boolean invertY;
+    private Map<Integer, GamepadBindings.Action> bindings;
+    private float deadzone;
+    private float lookSensitivity;
+    private boolean invertY;
 
     // Current injected state, so keys are never sent twice or left pressed.
     private final Set<Integer> heldKeys = new HashSet<>();
@@ -101,6 +101,11 @@ public final class GamepadMapper {
 
     public GamepadMapper(Context context) {
         this.context = context;
+        reloadSettings();
+    }
+
+    /** Reads the gamepad settings again (they can be changed while the game is paused). */
+    public void reloadSettings() {
         this.bindings = GamepadBindings.lookup(context);
         this.deadzone = GamepadBindings.deadzone(context);
         this.lookSensitivity = GamepadBindings.lookSensitivity(context);

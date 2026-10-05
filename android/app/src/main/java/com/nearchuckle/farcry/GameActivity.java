@@ -520,6 +520,10 @@ public class GameActivity extends SDLActivity {
     protected void onResume() {
         super.onResume();
         hideSystemUI();
+        // the gamepad settings may have been changed meanwhile (game menu, Settings)
+        if (gamepadMapper != null) {
+            gamepadMapper.reloadSettings();
+        }
     }
 
     @Override
