@@ -984,7 +984,9 @@ int SShaderTexUnit::mfSetTexture(int nt)
     if (pSTU->m_fTexFilterLodBias != CGLTexMan::m_TUState[gRenDev->m_TexMan->m_CurStage].m_fTexFilterLodBias)
     {
       CGLTexMan::m_TUState[gRenDev->m_TexMan->m_CurStage].m_fTexFilterLodBias = pSTU->m_fTexFilterLodBias;
+#ifndef __ANDROID__
       glTexEnvf(GL_TEXTURE_FILTER_CONTROL_EXT, GL_TEXTURE_LOD_BIAS_EXT, pSTU->m_fTexFilterLodBias);
+#endif
     }
   }
   else

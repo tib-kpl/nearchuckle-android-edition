@@ -1731,6 +1731,21 @@ void CGLRenderer::UpdateTextureInVideoMemory(uint tnum, unsigned char *newdata,i
   {
     int target = TargetTex[tnum] ? TargetTex[tnum] : GL_TEXTURE_2D;
     glTexSubImage2D(target, 0, posx, posy, w, h, srcformat, GL_UNSIGNED_BYTE, newdata);
+#ifdef __ANDROID__
+    static int s_logged = 0;
+    if (s_logged < 6)
+    {
+      s_logged++;
+      GLint bound = 0, tw = 0, th = 0, minFilter = 0, baseLevel = 0;
+      glGetIntegerv(GL_TEXTURE_BINDING_2D, &bound);
+      glGetTexLevelParameteriv(target, 0, GL_TEXTURE_WIDTH, &tw);
+      glGetTexLevelParameteriv(target, 0, GL_TEXTURE_HEIGHT, &th);
+      glGetTexParameteriv(target, GL_TEXTURE_MIN_FILTER, &minFilter);
+      glGetTexParameteriv(target, 0x813C /* GL_TEXTURE_BASE_LEVEL */, &baseLevel);
+      iLog->Log("Android video texture: update %d (%dx%d at %d,%d, format 0x%x, target 0x%x): bound %d, level 0 %dx%d, min filter 0x%x, base level %d, GL error 0x%x\n",
+        tnum, w, h, posx, posy, srcformat, target, bound, tw, th, minFilter, baseLevel, glGetError());
+    }
+#endif
   }
 }
 
@@ -2047,8 +2062,10 @@ void CGLRenderer::SetTexgen3D(float x1, float y1, float z1, float x2, float y2, 
 ///////////////////////////////////////////
 void CGLRenderer::SetLodBias(float value)
 {  
+#ifndef __ANDROID__
   if (m_lod_biasSupported)
     glTexEnvf(GL_TEXTURE_FILTER_CONTROL_EXT, GL_TEXTURE_LOD_BIAS_EXT, value);
+#endif
 }
 
 ///////////////////////////////////////////
